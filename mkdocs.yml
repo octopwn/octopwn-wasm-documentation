@@ -1,0 +1,54 @@
+site_name: OctoPwn WASM Documentation
+theme: material
+use_directory_urls: false
+repo_url: https://github.com/octopwn/octopwn-wasm-documentation/
+site_description: OctoPwn WASM Documentation
+site_author: The OctoPwn Team
+docs_dir: 'docs'
+nav:
+  - 'User Guide':
+    - 'Getting Started' : 'user-guide/gettingstarted.md'
+    - 'Modes of Operation': 'user-guide/modesofoperation.md'
+  - 'Misc':
+    - 'Security considerations': 'security.md'
+    - 'Licenses': 'licenses.md'
+  - 'Plugins': 
+    - 'Overview': './plugins/overview.md'
+    - 'Clients': 
+      - 'SMB' : './plugins/clients/smb.md'
+      - 'LDAP' : './plugins/clients/ldap.md'
+      - 'Kerberos' : './plugins/clients/kerberos.md'
+      - 'DNS' : './plugins/clients/dns.md'
+      - 'DRSUAPI' : './plugins/clients/drsuapi.md'
+      - 'SSH' : './plugins/clients/ssh.md'
+      - 'WinRM' : './plugins/clients/winrm.md'
+      - 'RDP' : './plugins/clients/rdp.md'
+    - 'Scanners': 
+      - 'Overview': './plugins/scanners/index.md'
+      - 'Jackdaw': './plugins/scanners/jackdaw.md'
+      - 'krb5userenum': './plugins/scanners/krb5userenum.md'
+      - 'rdpcap': './plugins/scanners/rdpcap.md'
+      - 'rdplogin': './plugins/scanners/rdplogin.md'
+      - 'rdpscreen' : './plugins/scanners/rdpscreen.md'
+      - 'smbadmin' : './plugins/scanners/smbadmin.md'
+      - 'smbfile': './plugins/scanners/smbfile.md'
+      - 'smbiface': './plugins/scanners/smbiface.md'
+      - 'smbos': './plugins/scanners/smbos.md'
+      - 'smbprintnightmare': './plugins/scanners/smbprintnightmare.md'
+      - 'smbprotocol': './plugins/scanners/smbprotocol.md'
+      - 'smbregdump' : './plugins/scanners/smbregdump.md'
+      - 'smbsession': './plugins/scanners/smbsession.md'
+      - 'snaffler': './plugins/scanners/snaffler.md'
+      - 'tcpportscanner': './plugins/scanners/tcpportscanner.md'
+    - 'Utils':
+      - 'Overview': './plugins/utils/index.md'
+      - 'pypykatz' : './plugins/utils/pypykatz.md'
+      - 'dpapi' :  './plugins/utils/dpapi.md'
+      - 'jackdaw': './plugins/utils/jackdaw.md'
+      - 'duckysvc': './plugins/utils/duckysvc.md'
+      - 'chat': './plugins/utils/chat.md'
+      - 'masscan': './plugins/utils/masscan.md'
+      - 'nmap': './plugins/utils/nmap.md'
+      - 'notes': './plugins/utils/notes.md'
+      - 'plugin': './plugins/utils/plugin.md'
+      - 'sqlitebrowser': './plugins/utils/sqlitebrowser.md'
