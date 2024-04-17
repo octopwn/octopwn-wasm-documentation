@@ -28,6 +28,11 @@ TBD
 Performs SPNRoast (kerberoast) attack, prints the results to the console.  
 TIP: Instead of using username, you can use a `Session ID` of an established `LDAP` or `LDAPS` session, in this case all vulnerable users will be kerberoasted. 
 
+
+krbtgt@sevenkingdoms.local - get from ldap client
+
+just put ldap client id then it uses the ldap client to list all spns and - kerberoast all
+
 #### asreproast
 Performs asreproast attack, prints the results to the console.
 TIP: Instead of using username, you can use a `Session ID` of an established `LDAP` or `LDAPS` session, in this case all vulnerable users will be asreproasted. 
