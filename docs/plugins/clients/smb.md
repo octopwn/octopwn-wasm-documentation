@@ -1,19 +1,13 @@
-hints on why its cool, what to do - link to enum - apts, ...
-
 # SMB Client plugin
 The SMB Client plugin within the "octopwn" framework, is designed to interact with a target system via SMB and DCE/RPC operations. 
 
-The SMB Client plugin primarily communicates with remote services via SMB pipes. Unlike the traditional method of connecting to the portmapper, and then connecting to the services via specific TCP or UDP ports, the smb plugin uses named pipes that can be interacted with via the IPC$ share. This method allows for reading and writing data as if interacting with a regular socket but over SMB and provides several advantages over the traditional portmapper approach: 
-
-- Single Authentication: Typically, there is no need to authenticate a second time when accessing services via SMB pipes, simplifying the process.
-- Broad Service Interaction: While not all services are available as SMB pipes, many critical ones are, allowing for diverse interaction capabilities.
+The SMB Client plugin primarily communicates with remote services via SMB pipes. Unlike the traditional method of connecting to the portmapper, and then connecting to the services via specific TCP or UDP ports, the smb plugin uses named pipes that can be interacted with via the IPC$ share. This method allows for reading and writing data as if interacting with a regular socket but over SMB.
 
 ## Getting Started
 
-To use the SMB Client plugin, select the credentials and the target and then create a client of type SMB in the Main GUI. This will open the SMB2 Client window with the selected credentials and the target and mount a the files in the file browser that can be access by clicking the `FILES` client in the client list. For most operations you will need to run the `login` command to get started.
+To use the SMB Client plugin, select the credentials and the target and then create a client of type SMB in the Main GUI. This will open the SMB2 client window with the selected credentials. For most operations you will need to run the `login` command to get started.
 
-### SMB File browser
-After sucsessfully creating the client, the SMB files will automatically be mounted as `smb-<clientid>` in the file explorer.
+After successfully creating the client, the SMB files will automatically be mounted as `smb-<clientid>` in the file browser (accessible via the FILES menu in the clients).
 The file browser supports basic file operations as you'd expect from a file browser like downloading and uploading files, removing and creating directories.
 
 ## Commands
@@ -29,7 +23,7 @@ This is a pre-login command which disables all DCE operations for restricted sys
 
 ### File Operations
 The File Management functionality within the SMB Client plugin allows viewing the files on the system and includes the capability to fetch Security Descriptors of directories and files within the mounted share's current directory which offers insights into permissions and potential misconfigurations.
-The file operation commands are independent of the operations performed in the File Browser Window. For a more convenient file operation, use the file browser. Please take not that there is a seperate  [smb file scanner](../scanners/smbfile.html) available within OctoPwn. 
+The file operation commands are independent of the operations performed in the File Browser Window. For a more convenient file operation, use the file browser. Please take note that there is a seperate [smb file scanner](../scanners/smbfile.html) available within OctoPwn, allowing you to scan for interesting files on shares. 
 
 #### shares
 Lists available shares on the target server. This is similar to the Windows command `net view`.
@@ -136,9 +130,10 @@ Creates a service that persists across restarts and starts it. This operates sim
 
 ### REGISTRY OPERATIONS
 
-The Registry Operations feature within the SMB Client plugin interacts with the Windows Remote Registry Service. This service is not always enabled by default, but in many configurations, attempting to connect triggers the service to start. 
+The Registry Operations feature within the SMB Client plugin interacts with the Windows Remote Registry Service. 
+The Remote Registry Service allows for remote query and modification of the registry on a Windows machine. 
 
-The Remote Registry Service allows for remote query and modification of the registry on a Windows machine. While not enabled by default for security reasons, many systems are configured to start this service upon a remote request. If the initial attempt to connect fails, the plugin will try to start the service automatically or you can try using the `serviceen RemoteRegistry` command to manually start the RemoteRegistry service. The remote query then often succeeds on a subsequent try as the service initializes.
+While not enabled by default for security reasons, many systems are configured to start this service upon a remote request. If the initial attempt to connect fails, the plugin will try to start the service automatically or you can try using the `serviceen RemoteRegistry` command to manually start the RemoteRegistry service. The remote query then often succeeds on a subsequent try as the service initializes.
 
 #### reglistusers
 The command queries the registry to list users who have logged into the system at some point in time. This command can reveal the Security Identifiers (SIDs) of both domain and local users that have previously logged in. This function allows even low-privileged users to enumerate accounts that have interacted with the system, offering a vector for identifying potential targets. 
@@ -237,7 +232,10 @@ Enumerates printer drivers on the remote system. It will list the name and assoc
 
 ### CERTIFICATE OPERATIONS
 
-Certificate Operations in the SMB Client plugin allow and exploiting vulnerabilities associated with certificate management, particularly  Misconfigured Certificate Templates (ESC1) and Misconfigured Enrollment Agent Templates (ESC3). These vulnerabilities expose flaws in the certificate enrollment process that can be manipulated to obtain unauthorized certificates, enabling attackers to request a certificate for any arbitrary user and thereby escalate privileges to domain admin. For an in-depth understanding, the ESC1 and ESC3 vulnerability is thoroughly explained in the SpecterOps whitepaper "[Certified Pre-Owned](https://specterops.io/wp-content/uploads/sites/3/2022/06/Certified_Pre-Owned.pdf)".
+Certificate Operations in the SMB Client plugin allow and exploiting vulnerabilities associated with certificate management, particularly  Misconfigured Certificate Templates (ESC1) and Misconfigured Enrollment Agent Templates (ESC3). These vulnerabilities expose flaws in the certificate enrollment process that can be manipulated to obtain unauthorized certificates, enabling attackers to request a certificate for any arbitrary user and thereby escalate privileges to domain admin. 
+
+!!! info
+	For an in-depth understanding, the ESC1 and ESC3 vulnerability is thoroughly explained in the SpecterOps whitepaper "[Certified Pre-Owned](https://specterops.io/wp-content/uploads/sites/3/2022/06/Certified_Pre-Owned.pdf)".
 
 The SMB Client only allows you the exploit the vulnerability. To identify vulnerable certificates you can use the functionalities in the [LDAP Plugin](ldap.html#certify). The certificates are requested via the ICPR-RPC service. 
 
@@ -276,9 +274,19 @@ This abuses Misconfigured Certificate Templates (ESC1) by requesting a certifica
 #### certreqonbehalf
 machine account on behalf of other person
 
+TODO
+
 ### NTLM COERCION
-no support for other rpc calls yet, pay us money
+
+NTLM coercion involves tactics that compel a target machine to initiate an NTLM authentication process with a controlled system. During this process, the target sends NTLM authentication messages to an attacker machine, which can then be relayed or cracked, exposing user credentials. This technique is often used in scenarios where direct access to credentials is not possible but where inducing a system to authenticate can provide an opportunity to capture useful information. This is especially useful for unconstrained delegation attacks. Currently, our framework supports the printerbug for NTLM coercion. 
+
+
 #### printerbug
+The `printerbug` command within our suite exploits a specific vulnerability in the Windows Print Spooler service to induce NTLM coercion. By manipulating the service's handling of printer RPC calls, an attacker can force a target system to initiate an NTLM authentication sequence with a controlled attacker machine. This can be particularly useful for capturing NTLM hashes, which can then be relayed or cracked to gain further access. Octopwn does currently not implement responder or ntlmrelayx functionalities. 
+
+##### Parameter
+
+- **attackerip**: Specifies the IP address of the attacker's machine. The target system will be coerced into initiating an NTLM authentication process with this IP.
 
 
 ### COMMAND EXECUTION
@@ -337,14 +345,15 @@ The dcsync output will be saved to the volatile browser storage in a text file a
 
 For the dcsync to work you need the target machine in the current client needs to be a domain controller. You to be logged-in with credentials with the appropriate privileges as explained above.
 
- Parameter: 
+##### Parameter 
+
  - **username** (optional): Specify the username of the user you want to dcsync. If you don't supply a username all users will be synced. 
 
 #### lsassdump
 
 The command operates by creating a temporary service to execute a PowerShell command that dumps the LSASS (Local Security Authority Subsystem Service) process memory to a file. The command used takes a snapshot of the LSASS process. After the dump, the service cleans up by removing both the service. 
 
-The dump is then parsed remotely with `pypykatz` without downloading the full lsass file. The output of pypykatz is then shown in the terminal. The credentials will not be saved in the credential hub of OctoPwn and are only shown on the terminal.
+The dump is then parsed remotely with `pypykatz` without downloading the full lsass file. The output of pypykatz is then shown in the terminal. The credentials will not be saved in the credential window of OctoPwn and are only shown on the terminal.
 
 The following command is being used to dump lsass.
 ```powershell
@@ -359,8 +368,21 @@ The `cpasswd` feature in the SMB Client plugin targets a well-known vulnerabilit
 
 ### VULNERABILITIES
 #### printnightmare
-fixed by microsoft - cve xxx
-takes a dll and execute it as system
-upload dll to target machine or a system the target machine has read access to via smb (e.g \\whatver\c$\asdfdf.dll) 
+
+The `printnightmare` command targets the CVE-2021-34527 vulnerability, commonly referred to as PrintNightmare. This exploit leverages flaws in the Windows Print Spooler service, communicating over the RPRN protocol. Despite Microsoft's patches, specific Group Policy settings can leave systems vulnerable, allowing for the remote execution of arbitrary code with system privileges. To exploit this vulnerability, a malicious DLL must be uploaded to a location accessible by the target machine, such as `\\localhost\c$\path\to\dll.dll`. The exploit then executes this DLL as the SYSTEM user, gaining high-level privileges.
+
+**Parameters**:
+
+*   **share**: Specifies the path where the malicious DLL is stored. For instance, `\\localhost\c$\path\to\dll.dll`.
+*   **driverpath** (optional?): This parameter typically specifies the driver path used by the print spooler to load the DLL. [???]
+
 #### parprintnightmare
-dcerpc - par
+
+The `parprintnightmare` command exploits the same vulnerability as `printnightmare` but uses DCERPC - PAR (Print System Asynchronous Remote Protocol) for communication. This variant functions similarly by executing a malicious DLL uploaded to a share accessible by the target machine. It serves as an alternative method to trigger the exploit.
+
+**Parameters**:
+
+*   **share**: Path to the malicious DLL, e.g., `\\localhost\c$\path\to\dll.dll`.
+*   **driverpath** (optional?): Defines the driver path for loading the DLL through the print spooler, necessary for executing the exploit under different service configurations. [???]
+
+
