@@ -1,7 +1,21 @@
 # SMB Client plugin
 The SMB Client plugin within the "octopwn" framework, is designed to interact with a target system via SMB and DCE/RPC operations. 
 
-The SMB Client plugin primarily communicates with remote services via SMB pipes. Unlike the traditional method of connecting to the portmapper, and then connecting to the services via specific TCP or UDP ports, the smb plugin uses named pipes that can be interacted with via the IPC$ share. This method allows for reading and writing data as if interacting with a regular socket but over SMB.
+## Features
+
+- SMB File Browser
+- File operations
+- User/Group/Session enumeration
+- Windows Service operations
+- Registry operations
+- Task operations
+- Printer operations
+- Certificate operations in the domain (ESC1 and ESC3)
+- NTLM Coercion (printerbug)
+- Command Execution
+- Secrets dumping (LSASS, Registry, DPAPI, DCSync)
+- Secrets hunting (gpppasswords)
+- Vulnerability exloitation (printnightmare)
 
 ## Getting Started
 
@@ -9,6 +23,10 @@ To use the SMB Client plugin, select the credentials and the target and then cre
 
 After successfully creating the client, the SMB files will automatically be mounted as `smb-<clientid>` in the file browser (accessible via the FILES menu in the clients).
 The file browser supports basic file operations as you'd expect from a file browser like downloading and uploading files, removing and creating directories.
+
+### Technical Background 
+
+The SMB Client plugin primarily communicates with remote services via SMB pipes. Unlike the traditional method of connecting to the portmapper, and then connecting to the services via specific TCP or UDP ports, the smb plugin uses named pipes that can be interacted with via the IPC$ share. This method allows for reading and writing data as if interacting with a regular socket but over SMB.
 
 ## Commands
 As usual, all functionalities will be discussed in command groups which logically group commands of similar nature.
