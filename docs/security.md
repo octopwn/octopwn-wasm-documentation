@@ -49,7 +49,7 @@ Our team is in the process of developing a structured incident response plan, wh
 
 ### Session File Management
 
-OctoPwn manages only the session file, stored securely in the browser's local storage. Future versions are projected to introduce encryption for these files to enhance security further. Users are advised to securely manage and delete session data when operating on third-party machines.
+OctoPwn manages only the session file, stored securely in the browser's local storage. The entire session file employs a mandatory encryption layer that relies on a secret password which is either set by the user (recommended) or uses the user's internal user ID. Users are advised to securely manage and delete session data when operating on third-party machines.
 
 ## Security Measures
 

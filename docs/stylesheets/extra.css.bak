@@ -1,0 +1,21 @@
+code {
+    background-color: lightgray !important; /* Light gray background */
+    color: black !important;               /* Dark gray text color */
+    font-weight: bold;         /* Make the text bold */
+    padding: 2px 4px;          /* Padding around the text */
+    border-radius: 4px;        /* Rounded corners for the background */
+    font-family: 'Courier New', monospace; /* Monospace font for code */
+}
+
+
+::-webkit-scrollbar{
+    width: 10px;
+    background-color: #00eb96 !important;
+}
+.md-nav--secondary .md-nav__title {
+    background: transparent !important;
+    box-shadow: 0 !important;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}

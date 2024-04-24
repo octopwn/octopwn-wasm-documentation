@@ -1,0 +1,86 @@
+:root {
+    --md-primary-fg-color:        #070708;
+    --md-primary-fg-color--light: #ECB7B7;
+    --md-primary-fg-color--dark:  #2c2c32;
+    --md-typeset-color:        #070708;
+}
+
+.md-source__repository--active {
+    color: white !important;
+}
+
+.md-header__topic {
+    position: 100px;
+}
+
+.md-sidebar {
+    background-color: #ffffff;
+}
+
+.md-sidebar__scrollwrap {
+    background-color: #ffffff;
+}
+
+.md-nav__title {
+    background-color: #ffffff;
+}
+
+.md-sidebar .md-sidebar--secondary {
+    background-color: #ffffff;
+}
+
+.md-nav__title {
+    background-color: #ffffff;
+}
+
+.md-main__inner .md-grid {
+    background-color: #ffffff;
+    margin: 0 !important;
+}
+
+.md-main__inner{
+    margin: 0 0 0 0 !important;
+}
+
+.md-typeset h1, .md-typeset h2 {
+    font-weight: bold;
+    color: black;
+}
+
+.md-typeset h3 {
+    font-weight: 600;
+    color: black;
+}
+
+.md-typeset h4 {
+    font-weight: 400;
+    color: black;
+}
+
+code {
+    background-color: #DADADA !important; /* Light gray background */
+    color: black !important; /* Black text color */
+}
+
+::selection {
+    background-color: #b1ffe3; /* Pink background */
+    color: #000000;            /* Black text */
+}
+
+
+
+.md-sidebar__scrollwrap:focus-within, .md-sidebar__scrollwrap:hover {
+    scrollbar-color: #00eb96 #0000;
+}
+
+.md-sidebar__scrollwrap:focus-within, .md-sidebar__scrollwrap {
+    scrollbar-color: #DADADA #0000;
+}
+
+.md-content {
+    background-color: #f4f4f4;
+}
+
+li .md-nav__item:hover {
+    color: #000000;
+}
