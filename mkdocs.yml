@@ -1,14 +1,34 @@
 site_name: OctoPwn WASM Documentation
-theme: material
+theme: 
+  name: material
+  features:
+    - navigation.tabs
+    - content.code.copy
+    - content.code.select
 use_directory_urls: false
 repo_url: https://github.com/octopwn/octopwn-wasm-documentation/
 site_description: OctoPwn WASM Documentation
 site_author: The OctoPwn Team
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
 docs_dir: 'docs'
 nav:
-  - 'User Guide':
+  - 'Home':
     - 'Getting Started' : 'user-guide/gettingstarted.md'
     - 'Modes of Operation': 'user-guide/modesofoperation.md'
+    - 'Core Functionalities': 'user-guide/corefunctionalities.md'
+    - 'Credentials': 'user-guide/credentials.md'
+  - 'Setup':
+    - 'Install': 'setup/install.md'
   - 'Misc':
     - 'Security considerations': 'security.md'
     - 'Licenses': 'licenses.md'
