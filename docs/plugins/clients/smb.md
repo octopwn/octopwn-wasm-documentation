@@ -21,6 +21,8 @@ The SMB Client plugin within the "octopwn" framework, is designed to interact wi
 
 To use the SMB Client plugin, select the credentials and the target and then create a client of type SMB in the Main GUI. This will open the SMB2 client window with the selected credentials. For most operations you will need to run the `login` command to get started.
 
+For more information on supported credentials, see the [credentials page](../../user-guide/credentials.html). 
+
 After successfully creating the client, the SMB files will automatically be mounted as `smb-<clientid>` in the file browser (accessible via the FILES menu in the clients).
 The file browser supports basic file operations as you'd expect from a file browser like downloading and uploading files, removing and creating directories.
 
@@ -361,7 +363,7 @@ In contrast to other tools allowing a dcsync, the password history and AES keys 
 
 The dcsync output will be saved to the volatile browser storage in a text file and automatically saved into the OctoPwn credentials hub. Please don't forget to download the files before reloading your browser session.
 
-For the dcsync to work you need the target machine in the current client needs to be a domain controller. You to be logged-in with credentials with the appropriate privileges as explained above.
+For the dcsync to work, the target in the current client needs to be a domain controller. You need to be logged-in with credentials with the appropriate privileges as explained above.
 
 ##### Parameter 
 
@@ -387,16 +389,27 @@ The `cpasswd` feature in the SMB Client plugin targets a well-known vulnerabilit
 ### VULNERABILITIES
 #### printnightmare
 
-The `printnightmare` command targets the CVE-2021-34527 vulnerability, commonly referred to as PrintNightmare. This exploit leverages flaws in the Windows Print Spooler service, communicating over the RPRN protocol. Despite Microsoft's patches, specific Group Policy settings can leave systems vulnerable, allowing for the remote execution of arbitrary code with system privileges. To exploit this vulnerability, a malicious DLL must be uploaded to a location accessible by the target machine, such as `\\localhost\c$\path\to\dll.dll`. The exploit then executes this DLL as the SYSTEM user, gaining high-level privileges.
+The `printnightmare` command targets the CVE-2021-34527 vulnerability, commonly referred to as PrintNightmare. This exploit leverages flaws in the Windows Print Spooler service, communicating over the RPRN protocol. Despite Microsoft's patches, specific Group Policy settings can leave systems vulnerable, allowing for the remote execution of arbitrary code with system privileges. To exploit this vulnerability, a malicious DLL must be uploaded to a location accessible by the target machine, such as `\\localhost\c$\path\to\dll.dll`. The exploit then executes this DLL as the SYSTEM user, gaining high-level privileges. - accessible via named pipe via rpc channel
+
+Local Privesc + remote privesc
+
+- SERVICE is not available
+- service cannot be fetched from the remote source 
+
+scanner module is availble - smbprintnightmare - tell you if vulnerable or not 
+
 
 **Parameters**:
 
-*   **share**: Specifies the path where the malicious DLL is stored. For instance, `\\localhost\c$\path\to\dll.dll`.
-*   **driverpath** (optional?): This parameter typically specifies the driver path used by the print spooler to load the DLL. [???]
+*   **share**: Specifies the path where the malicious DLL is stored. For instance, `\\localhost\c$\path\to\dll.dll`. Needs to be readable by system. 
+*   **driverpath** (optional): after triggering first stage, server fetches dll, not invoking it, will put it into system32, invoke the dll that was put in system32. you need the path where it was put into. for some reasons the driver might be in a different place, you can override the path here to use the second stage with this one.
+This parameter typically specifies the driver path used by the print spooler to load the DLL. [???]
 
 #### parprintnightmare
 
-The `parprintnightmare` command exploits the same vulnerability as `printnightmare` but uses DCERPC - PAR (Print System Asynchronous Remote Protocol) for communication. This variant functions similarly by executing a malicious DLL uploaded to a share accessible by the target machine. It serves as an alternative method to trigger the exploit.
+some cases where this works but the above does not work
+
+The `parprintnightmare` command exploits the same vulnerability as `printnightmare` but uses DCERPC - PAR (Print System Asynchronous Remote Protocol) for communication. This variant functions similarly by executing a malicious DLL uploaded to a share accessible by the target machine. It serves as an alternative method to trigger the exploit. - only accessible via RPC
 
 **Parameters**:
 

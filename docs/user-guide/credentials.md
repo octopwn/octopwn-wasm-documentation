@@ -53,3 +53,9 @@ Uploading credential files into OctoPwn enables the use of various types of cred
 
 !!! warning
 	Remember that files uploaded to the volatile browser storage are **temporary**. They will need to be re-uploaded if the browser or OctoPwn session is restarted.
+
+
+
+
+Creating empty credentials:
+- Add empty fields with type NONE
