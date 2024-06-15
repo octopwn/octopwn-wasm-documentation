@@ -33,8 +33,3 @@ steps:
 # Define the timeout for the build
 timeout: '1200s'
 
-# Specify the required files
-files:
-  - mkdocs.yml
-  - requirements.txt
-  - docs/**  # Assuming your documentation source files are in the docs/ folder
