@@ -33,3 +33,6 @@ steps:
 # Define the timeout for the build
 timeout: '1200s'
 
+# Define the logging options
+options:
+  logging: CLOUD_LOGGING_ONLY
