@@ -1,0 +1,38 @@
+steps:
+# Step 1: Install mkdocs and other requirements
+- name: 'python:3.11-slim'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      python -m venv venv
+      source venv/bin/activate
+      pip install --upgrade pip
+      pip install mkdocs mkdocs-material  # Add other requirements as needed
+      if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+# Step 2: Build the documentation
+- name: 'python:3.11-slim'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      source venv/bin/activate
+      mkdocs build
+
+# Step 3: Upload the results to a Google Cloud Storage bucket
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args:
+    - 'gsutil'
+    - '-m'
+    - 'rsync'
+    - '-r'
+    - 'site'
+    - 'gs://docs.octopwn.com/'
+
+# Define the timeout for the build
+timeout: '1200s'
+
+# Define the logging options
+options:
+  logging: CLOUD_LOGGING_ONLY
