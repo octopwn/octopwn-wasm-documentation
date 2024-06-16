@@ -279,7 +279,7 @@ This abuses Misconfigured Certificate Templates (ESC1) by requesting a certifica
 !!! question "Troubleshooting Authentication"
 	- If no client gets created, choose Kerberos, not NTLM, as Authentication Protocol, when creating the client
 	- If you get the error `KDC_ERR_S_PRINCIPAL_UNKNOWN: Server not found in Kerberos database` on login: The target needs to have the hostname set, the IP is not enough, otherwise Kerberos won't work. 
-	- If you get the error `KDC_ERR_PADATA_TYPE_NOSUPP: KDC has no support for PADATA type (pre-authentication data)` on login: This means that Kerberos does not allow certificate-based authentication. Still, you can use LDAP SSL authentication, instead of SMB to authenticate against LDAP and then do LDAP stuff like adding yourself to a group or changing objects. For that create an LDAP Client and choose SSL as Authentication Protocol.
+	- If you get the error `KDC_ERR_PADATA_TYPE_NOSUPP: KDC has no support for PADATA type (pre-authentication data)` on login: This means that Kerberos does not allow certificate-based authentication. Still, you can use LDAPS, instead of SMB to authenticate against LDAP and then do LDAP stuff like adding yourself to a group or changing objects. For that create an LDAP**S** Client and use .
 
 ##### Parameters
 
@@ -363,11 +363,18 @@ In contrast to other tools allowing a dcsync, the password history and AES keys 
 
 The dcsync output will be saved to the volatile browser storage in a text file and automatically saved into the OctoPwn credentials hub. Please don't forget to download the files before reloading your browser session.
 
-For the dcsync to work, the target in the current client needs to be a domain controller. You need to be logged-in with credentials with the appropriate privileges as explained above.
+For the dcsync to work, the target in the current client needs to be the domain controller of the domain you want to sync. You need to be logged-in with credentials with the appropriate privileges as explained above.
+
+{==How do I sync from a different domain? I added dcsync privileges to a foreign domain object, logged in on the other DC with that user and get==}
+
+```
+ERROR_DS_DRA_BAD_DN - The distinguished name specified for this replication operation is invalid.
+```
 
 ##### Parameter 
 
- - **username** (optional): Specify the username of the user you want to dcsync. If you don't supply a username all users will be synced. 
+- **username** (optional): Specify the username of the user you want to dcsync. If you don't supply a username all users will be synced. 
+- **storesecrets**: {==what does this do?==}
 
 #### lsassdump
 

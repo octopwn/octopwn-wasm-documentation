@@ -230,8 +230,6 @@ Adds an additional hostname to a computer account. You need the appropriate perm
 #### pre2000
 Lists all machine account which were created a Pre-Windows 2000 compatible machine account. This computer accounts have insecure passwords set. More information can be found here: [Pre-Windows 2000 computers](https://www.thehacker.recipes/ad/movement/domain-settings/pre-windows-2000-computers)
 
------
-
 ### GPO
 #### gpos
 Lists all Group Policy objects in the current domain.
@@ -249,86 +247,278 @@ This is the new Windows LAPS implementation. It prints the encrypted blobs conta
 
 ### GROUP
 #### groupmembership
+Retrieves a list of groups to which the specified distinguished name (DN) belongs (is a member of).
+
+##### Parameter
+- **dn**: The distinguished name (DN) of the Active Directory (AD) object for which you wish to determine group membership. (e.g. `CN=cersei.lannister,OU=Crownlands,DC=sevenkingdoms,DC=local`).
 
 #### groupmembers
+Retrieves a list of members belonging to a specified group.
+
+##### Parameters
+
+- **dn**: The distinguished name (DN) of the group whose members you wish to list. Example: `CN=Remote Desktop Users,CN=Builtin,DC=sevenkingdoms,DC=local`.
+- **recursive** (optional): A boolean value indicating whether to retrieve members recursively, including members of subgroups. Set to True for a recursive search or False for a non-recursive search. The default value is True.
 
 #### dadms
 Lists first degree domain admins.
 
 ### TRUSTS
+
+In Active Directory (AD) environments, trusts can be bidirectional, allowing reciprocal access between domains, or unidirectional, where only one domain has access privileges to the other.
+
+If you have domain admin rights in a child domain, you can exploit trust relationships to directly escalate privileges into a parent domain. This is achievable using either the krbtgt hash or the Trust Key between the domains.
+
+For one-way inbound trusts, where the trust is inbound from the perspective of your controlled domain, it permits entities in your domain to access resources in the trusted foreign domain. You can abuse this by enumerating and identifying foreign domain groups that include users from your domain. By manipulating these relationships and using tools like OctoPwn to handle Kerberos ticket requests, you can impersonate legitimate foreign domain users, gaining access to systems and resources in the trusted domain.
+
+Conversely, one-way outbound trusts can be partially exploited even though they are designed to restrict your domain’s access to the trusted domain. You can leverage shared credentials stored in Trusted Domain Objects (TDOs), which contain the trust keys (inter-realm keys) automatically updated every 30 days. By extracting these keys, you can impersonate trust accounts in the foreign trusted domain, potentially accessing resources despite the one-way nature of the trust.
+
 #### trusts
 Lists AD trusts.
 
 ### SCHEMA
 #### schemaentry
-Used for debugging purposes.
+Used for debugging purposes. Do not use this!
 #### allschemaentry
 Used for debugging purposes. Do not use this!
 
 ### SECURITY DESCRIPTOR
 #### changeowner
-Changes the Owner entry in the nTSecurityDescriptor attribute of a given DN
+Modifies the owner listed in the `nTSecurityDescriptor` attribute of a specified AD object specified by the distinguished name (DN) in Active Directory.
+
+##### Parameters
+- **new_owner_sid**: SID (Security Identifier) of the AD user or group to be granted ownership permissions for the target. Use the `dn2sid` command to convert a DN into a SID. Example: `S-1-5-21-687080233-923555765-3897950641-1116`.
+- **target_dn**: The DN of the target object for which the specified user or group in the `new_owner_sid` will be assigned ownership permissions. Example: `CN=Small Council,OU=Crownlands,DC=sevenkingdoms,DC=local`
+- **target_attribute** (optional): Specifies the attribute within the AD object that should receive the SID. The default attribute is nTSecurityDescriptor, which contains ownership permissions. Specify this parameter only if you need to write the SID to a different attribute in the AD object.
+
+!!! troubleshooting
+	If you get the error `constraintViolation` you probably do not have the appropriate permission to change the owner.
+
 #### addprivdcsync
-Adds DCSync privileges to a a user specified by DN on the current forest.
+Adds DCSync rights to the given user by modifying the forest's Security Descriptor to add GetChanges and GetChangesAll ACE. You need permissions to change the forest's security descriptor. 
+
+##### Parameters
+- **user_dn**: The user you want to add dcsync privileges for. Example: `CN=tyron.lannister,OU=Westerlands,DC=sevenkingdoms,DC=local`
+- **forest**: {==Can I just put a foreign domain such as `essos.local` here and it works? I did it and it said it's okay, but I wasn't able to dcsync or see it in done, so I guess no. What else would this be for?==}
 
 #### addprivaddmember
-Adds AddMember privileges to a user on a group
+Grants a user the AddMember privilege for a specific group within the domain. This action authorizes the user to add members to the group but does not include the user as a member of the group.
+
+##### Parameters
+- **user_dn**: The distinguished name (DN) of the user to whom you want to assign the privilege.  Example: CN=tyron.lannister,OU=Westerlands,DC=sevenkingdoms,DC=local
+- **group_dn**: The distinguished name (DN) of the group to which the AddMember privilege will be applied. Example: CN=Small Council,OU=Crownlands,DC=sevenkingdoms,DC=local
 
 #### setsd
-Replaces the security descriptor of a given DN.
+Replaces the security descriptor of a specified distinguished name (DN) in Active Directory. We recommend fetching the old Security descriptor first with `getsd`and then replacing only the relevant parts.
+
+- **target_dn**: The distinguished name (DN) of the AD object whose security descriptor is to be replaced.
+- **sddl**: The raw Security Descriptor Definition Language (SDDL) string that defines the new security settings. For more information on SDDL syntax and structure, refer to Microsoft's official [SDDL documentation](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-definition-language).
 
 #### getsd
-Fetches the security descriptor of a given DN
+Fetches the security descriptor of a given DN. 
+
+##### Parameter
+ - **dn**: The distinguished name (DN) of the AD object for which the security descriptor will be fetched.
 
 #### addallowedtoactonbehalfofotheridentity
 
+This command can be used to abuse Resource-Based Constrained Delegation. 
+
+Resource-based Constrained Delegation (RBCD) is a powerful mechanism in Active Directory that can be exploited using commands like `addallowedtoactonbehalfofotheridentity` (from the LDAP client), `s4uself`, and `s4uproxy` commands (from the Kerberos client) to escalate privileges and gain unauthorized access to network resources. Here's how these components work together in an RBCD attack scenario:
+
+##### Understanding Resource-Based Constrained Delegation
+RBCD allows a computer or service in Active Directory to delegate to another computer or service. This is controlled through the `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute on a target computer object, which specifies which principals (users or computers) are permitted to delegate their identity to the target. Modifying this attribute to include an attacker-controlled principal can set the stage for a delegation-based attack.
+
+More detailed information on RBCD can be found [here](https://www.thehacker.recipes/ad/movement/kerberos/delegations/rbcd).
+
+##### Step-by-Step Exploitation Process
+
+- Setup with `addallowedtoactonbehalfofotheridentity`:
+  Use the `addallowedtoactonbehalfofotheridentity` command to modify the `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute of a target computer object in AD. This is done by specifying a principal that the attacker controls and which has a Service Principal Name (SPN). The SPN is crucial for Kerberos to function properly in these delegation scenarios.
+
+- Ticket Manipulation with `s4uself` command (Kerberos Client):
+  s4u2self is a Kerberos extension used to obtain a service ticket on behalf of any user (even those who have not authenticated via Kerberos) to the service running under the account executing the command. In an RBCD context, s4u2self is used to acquire a service ticket for the attacker-controlled account specified in the `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute. This service ticket impersonates a high-privilege user.
+
+- Extending Access with `s4uproxy` command (Kerberos Client):
+  After obtaining an initial service ticket with `s4uself`, `s4uproxy` can be employed to request access to additional services on behalf of the impersonated user. It uses the previously obtained ticket to request another service ticket for a different service that the initial account is allowed to delegate to. 
+
+##### Practical Application and Parameters
+- Using `addallowedtoactonbehalfofotheridentity`:
+	- Parameters:
+        - **target_dn**: The distinguished name (DN) of the target Active Directory object for which you want to configure delegation. This is usually a computer object within the domain that will be permitted to act on behalf of another identity.
+        - **other_identity**: The Security Identifier (SID) of the user or computer that will be allowed to act on behalf of the target specified in `target_dn`. This identity is granted the ability to impersonate the target object when requesting access to resources. 
+
+        {==How do I abuse it with your tool, especially the s4uself and s4uproxy part==}
+
+        ```
+        execute-assembly Rubeus.exe s4u /user:computer where we have computer account nt hash of$ /rc4:<rc4 hash of this computer> /impersonateuser:<localadmin da or dc> /msdsspn:cifs/TargetComputer /ptt
+        ```
+
+To effectively add permissions using commands like `addallowedtoactonbehalfofotheridentity` in an RBCD scenario, certain prerequisites and permissions are necessary. These are often identified through tools such as BloodHound, which can visualize and pinpoint specific AD permissions and misconfigurations. Here's a brief explanation of what is required to successfully manipulate AD attributes for escalating privileges:
+
+- _GenericWrite_:
+    This permission allows a user to modify most attributes of an object in Active Directory, which is essential for setting up conditions for RBCD attacks. It doesn't include permissions to modify security-sensitive attributes directly, but includes the ability to set the msDS-AllowedToActOnBehalfOfOtherIdentity attribute directly.
+
+- _GenericAll_:
+    This is a more extensive permission that includes GenericWrite but also allows full control over the object, including the ability to modify security descriptors and change ownership. With GenericAll, an attacker can completely control an AD object, 
+
+- _WriteOwner_:
+    This permission specifically allows a user to change the owner of an AD object. Changing ownership is crucial because, as the owner, a user gains the ability to modify the object’s discretionary access control list (DACL). Before utilizing this, you might need to first establish yourself as the owner, which can be facilitated through the `changeowner` command, as described here.
+
+- _Owner_:
+	If you are the owner you will need to grant yourself at least GenericWrite privileges on the object you want to modify by using the `setsd` command.
+
+- _WriteDACL_:
+    With the ability to modify the DACL of an object, a user can grant themselves or others additional permissions on that object by adjusting the security descriptor using the `setsd` command, allowing you to specify exactly what permissions are added or removed.
 
 ### SID
 #### sidresolv
+
+Resolves the username and domain for a given Security Identifier (SID).
+
+##### Prameter
+
+- sid: The Security Identifier (SID) of the user or object whose details are to be resolved.
+
 #### sid2dn
-Fetches the DN for an object identified by its SID
+Retrieves the Distinguished Name (DN) for an object based on its Security Identifier (SID).
+
+##### Parameter
+- **sid**: The SID of the object for which the DN is required.
+
 #### dn2sid
-Fetches the SID of an object identified by its DN
+Fetches the Security Identifier (SID) of an object identified by its Distinguished Name (DN).
+
+##### Parameter
+- **dn**: The DN of the object whose SID is to be retrieved.
+
 #### dn2sam
-Fetches the sAMAccountName of a given object identified by its DN
+{==does not work==}
+Retrieves the sAMAccountName of an object identified by its Distinguished Name (DN).
+
+##### Parameter
+- **dn**: The DN of the object for which the sAMAccountName is required.
+
 #### sam2dn
-Fetches the DN of an object by its sAMAccountName
+{==does not work==}
+Fetches the Distinguished Name (DN) of an object using its sAMAccountName.
+
+##### Parameter
+- **sAMAccountName**: The sAMAccountName of the object whose DN is needed.
 
 ### GMSA
 #### gmsa
+The `gmsa` command allows for reading the passwords of Group Managed Service Accounts (gMSA), which is used for services and tasks requiring privileged access. Access to read gMSA passwords is permissible only when an entity controls an object with adequate permissions outlined in the target gMSA account’s msDS-GroupMSAMembership attribute's Discretionary Access Control List (DACL). Typically, these are principals explicitly allowed to use the gMSA account. 
 
+More information can be found [here](https://web.archive.org/web/20240228044821/https://cube0x0.github.io/Relaying-for-gMSA/).
 
 ### PKI
 #### certify
-Lightweigth certipy implementation. When the command field is `vuln` it will show potentically vulnerablecertificate templates.
+This command is a lightweight implementation of Certipy, designed to analyze certificate templates within an Active Directory environment. Set `cmd` to `vuln` to find vulnerable certificates. It lists all/vulnerable certificate templates (depending on the cmd). 
 
+When using the `vuln` command you can encounter the following outputs:
+
+- Enrollee supplies subject: This is ESC1, see the [SMB Client certreq command](smb.html#certreq) on how to abuse it.
+{==TODO What can we do with the others?==} 
+- Certificate request agent
+- Needs authorized signature
+- Needs manager approval
+- Owner is low priv user
+- Owner can be controlled by current user
+- Lowpriv SID has full control
+- Lowpriv SID can write DACLs
+- Lowpriv SID can change Owner
+- Lowpriv SID can write property
+- Current user can write DACLs
+- Current user can change Owner
+- Current user can write property
+- Current user has full control
+
+##### Parameters
+
+- **cmd** (optional): This parameter allows the user to specify the command type. Setting this to `vuln` will filter and display only those certificate templates that are potentially vulnerable. If no parameters are used, the command will list all certificate templates available within the directory.
+- **username** (optional): Use this parameter to search certificate templates based on specific user permissions. It will return templates where the specified user has permissions
 #### rootcas
-Lists all root certificate authorities
+Lists all root certificate authorities in the domain
 
 #### ntcas
-Lists all NT certificate authorities
+Lists all NT certificate authorities in the domain
 
 #### aiacas
 
+Lists all Authority Information Access authorities in the domain
+
+{==What can I do with these? is this just info? why would I want to know them?==}
+
 #### enrollmentservices
-Lists all enrollment services
+Lists all enrollment services. This can be helpful in identifying if there are services with Certificate Web Enrollment enabled. You can check this by browsing to the host the CA service is running on to `http(s)://%ADCSServer%/certsrv/certfnsh.asp`. If web enrollment is enabled you can abuse ESC8 with ntlmrelayx and coercion.  
+
+More information on that can be found [here](https://dirkjanm.io/ntlm-relaying-to-ad-certificate-services/).
 
 #### addcerttemplatenameflagaltname
-Modifies a certificate template by giving the 
+Modifies the msPKI-Certificate-Name-Flag value of the specified certificate template and enables ENROLLEE_SUPPLIES_SUBJECT_ALT_NAME bit. If 'flags' is present then it will assign that value.
+
+{==error==}
+
+```
+invalidAttributeSyntax" Reason: "b'00000057: LdapErr: DSID-0C090FC7, comment: Error in attribute conversion operation
+```
+
+##### Parameters
+- **certtemplatename**: Name of the certificate template
+- **flags**: {==??? what ==}
 #### addenrollmentright
+Grants enrollment rights to a user (by DN) for the specified certificate template. Use this if you have permissions to write properties, but don't have enrollment rights yet. 
+
+##### Parameters
+- **certtemplatename**: The name of the certificate template to which you whish to add enrollment rights to. Example: `MyEnrollmentAgent`
+- **user_dn**: The distinguished name (DN) of the user or group you want to add enrollment rights for on the specified template. Example: `CN=tyron.lannister,OU=Westerlands,DC=sevenkingdoms,DC=local`
+
 #### certtemplates
-Lists all certificate templates with attributes when `name` parameter is left empty, otherwise it only lists the specific template attributes.
+Lists all certificate templates with attributes their attributes. This does not check for specifically vulnerable templates.  
+
+##### Parameter
+- **name** (optional): The name of a specific certificate template you want to view, if you already know the name. If you do not enter anything, all templates will be shown.  
 
 ### DELEGATION
 #### unconstrained
-Lists all unconstrained delegetion objects
+Identifies all Active Directory objects configured with unconstrained delegation by searching for those marked with the TRUSTED_FOR_DELEGATION flag. For more details on unconstrained delegation, visit: [Unconstrained Delegation - The Hacker Recipes](https://www.thehacker.recipes/ad/movement/kerberos/delegations/unconstrained).
+
 #### constrained
-Lists all constrained delegation objects
+Identifies Active Directory service accounts configured with constrained delegation, allowing them to impersonate users (except those protected against delegation) to access specified services. This command helps audit which services can potentially be accessed via delegation. Note that users flagged as "is sensitive and cannot be delegated" or members of the "Protected Users" group are immune to such delegation attempts, except for the native Administrator account (RID 500), which remains vulnerable even if added to the Protected Users group. For more insights on constrained delegation, you can check [here](
+https://www.thehacker.recipes/ad/movement/kerberos/delegations/constrained).
+
 #### s4u2proxy
+
+Lists all s4u2proxy objects.
+
+{==What are s4u2proxy objects?==}
 
 
 ### DNS
 #### dnszones
 Lists all dns zones
+
+{==Doesn't seem to list anything==}
+
 #### dnsdump
 Fetches all DNS entries when the `zone` parameter is empty and stores them in a .tsv file. In case the `zone` parameter is set it will only fetch DNS entries for that gibven zone.
+
+{==Exception==}
+```
+dnsdump zone=sevenkingdoms.local
+Error:  Exception: unknown address family 10
+Traceback:   File "./octopwn/clients/ldap/console.py", line 1344, in do_dnsdump
+Traceback: 
+Traceback:   File "/lib/python3.11/site-packages/msldap/wintypes/dnsp/strcutures.py", line 91, in get_formatted
+Traceback:     return MSLDAP_DNS_TYPE_TO_CLASS[self.Type].from_bytes(self.Data)
+Traceback:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Traceback: 
+Traceback:   File "/lib/python3.11/site-packages/msldap/wintypes/dnsp/strcutures.py", line 154, in from_bytes
+Traceback:     return DNS_RPC_RECORD_AAAA.from_buffer(io.BytesIO(data))
+Traceback:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Traceback: 
+Traceback:   File "/lib/python3.11/site-packages/msldap/wintypes/dnsp/strcutures.py", line 159, in from_buffer
+Traceback:     res.IpAddress = socket.inet_ntop(socket.AF_INET6, buff.read(16))
+Traceback:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
