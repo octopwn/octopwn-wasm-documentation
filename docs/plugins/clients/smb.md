@@ -294,7 +294,7 @@ This abuses Misconfigured Certificate Templates (ESC1) by requesting a certifica
 #### certreqonbehalf
 machine account on behalf of other person
 
-TODO
+{==TODO==}
 
 ### NTLM COERCION
 

@@ -222,7 +222,7 @@ Adds an additional hostname to a computer account. You need the appropriate perm
 
 ##### Parameters
 
-- **user_dn**: The distinguished name of the computer account to which you want to the DNS hostname to. (e.g. `CN=KINGSLANDING,OU=Domain Controllers,DC=sevenkingdoms,DC=local) {==Is the name of the parameter incorrect here?==}
+- **user_dn**: The distinguished name of the computer account to which you want to the DNS hostname to. (e.g. `CN=KINGSLANDING,OU=Domain Controllers,DC=sevenkingdoms,DC=local`) {==Is the name of the parameter incorrect here?==}
 - **hostname**: The DNS name you want to point to the computer specified in the `user_dn` parameter. (e.g. `test2.sevenkingdoms.local`)
 
 {==Where is this added? I can't seem to resolve this additional hostname after successfully adding it... I can see it in the SPNs though==}
@@ -234,19 +234,18 @@ Lists all machine account which were created a Pre-Windows 2000 compatible machi
 
 ### GPO
 #### gpos
-Lists all GPOs
+Lists all Group Policy objects in the current domain.
 
 ### LAPS
+The Local Administrator Password Solution (LAPS) from Microsoft which exists in a legacy and a newer Windows LAPS implementation, manages unique local administrator passwords for domain-joined computers and securely stores them in Active Directory (AD). To access LAPS-managed passwords, users require specific privileges: the "Read" permission on the ms-Mcs-AdmPwd attribute, membership in designated AD groups like "Domain Admins," or specifically delegated permissions.
+
 #### laps
-Prints all machine accounts and plaintext passwords for the local admin user of said accounts. You'd need to have the necessary permission to do this.
+This is the legacy LAPS implementation. It prints all machine accounts and plaintext passwords for the local admin user of said accounts. You'd need to have the necessary permission to do this. The legacy LAPS allows reading the password from the object directly.
 
 #### newlaps
-Print the encrypted blobs containing all (or some) machine account's local administrator passwords for which your user has access to. You'd need to Decrypt these blobs using an `SMB session` (Microsoft LAPS)
+This is the new Windows LAPS implementation. It prints the encrypted blobs containing of all (or some) machine account's local administrator passwords for which your user has access to. You need to decrypt these blobs using an `SMB session`. 
 
-what is the difference between laps and newlaps? standard laps - read the object = read the password
-microsoft laps: if i am in the right groups, then i can download the encrypted passwords
-
-over time in 
+{==How do I use this with an SMB session? do i just create the SMB session and it works automatically? Don't have LAPS in my lab==}
 
 ### GROUP
 #### groupmembership
