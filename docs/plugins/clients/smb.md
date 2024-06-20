@@ -30,6 +30,30 @@ The file browser supports basic file operations as you'd expect from a file brow
 
 The SMB Client plugin primarily communicates with remote services via SMB pipes. Unlike the traditional method of connecting to the portmapper, and then connecting to the services via specific TCP or UDP ports, the smb plugin uses named pipes that can be interacted with via the IPC$ share. This method allows for reading and writing data as if interacting with a regular socket but over SMB.
 
+### Supported Authentication Types
+| Authentication Protocol | Secret Type | Description | Example |
+| ----- | ----- | ------| ----- |
+| NTLM | Password | Plaintext Password | MyPassw0rd | 
+| NTLM | NT | NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| NTLM | RC4 | RC4 NT Hash - same as NT | 8846F7EAEE8FB117AD06BDD830B7586C |
+| NTLM | AES | AES Key (contains a salt such as TEST.LOCALusername) - can be used in stead of the NT Hash | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
+| NTLM | NONE | Null authentication |  |
+| Kerberos | NT | NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| Kerberos | RC4 | RC4 NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| Kerberos | AES | AES Key (contains a salt such as TEST.LOCALusername) - can be used instead of the NT Hash | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
+| Kerberos | P12/PFX | Certificate - upload the certificate to volatile storage and then enter certfile path relative from `/browserefs/volatile`. If the certfile has a password, enter it as a secret | Administrator.pfx |
+| Kerberos | CCACHE | Kerberos credentials in binary CCACHE file format  | Administrator.ccache |
+| Kerberos | KEYTAB | Kerberos credentials in binary KEYTAB file format | Administrator.keytab |
+| Kerberos | KIRBI | Kerberos credentials in binary KIRBI file format | Administrator.kirbi |
+| Kerberos | KIRBI | Kerberos credentials in base64 KIRBI file format | doIF9DCCBfCg ...(snip)... ZXVzLmdob3N0cGFjay5sb2NhbA== |
+| Kerberos | NONE | Null authentication |  |
+
+
+**NTLM (NT LAN Manager)**: A challenge-response authentication protocol used to authenticate a client to a network server on a Windows domain. It's commonly used for SMB and LDAP in environments where Kerberos might not be feasible.
+
+**Kerberos**: A network authentication protocol designed to provide strong authentication for client/server applications by using secret-key cryptography. It's highly recommended for environments that require robust security, especially in Active Directory setups.
+
+
 ## Commands
 As usual, all functionalities will be discussed in command groups which logically group commands of similar nature.
 

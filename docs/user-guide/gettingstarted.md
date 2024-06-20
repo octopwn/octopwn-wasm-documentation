@@ -31,6 +31,8 @@ Currently, an issue with our registration system results in the first verificati
 
 - A detailed guide on how to navigate through OctoPwn's user interface will be provided in a separate document.
 
+{==copy works by just selecting==}
+
 ---
 
 ### Core Functionalities

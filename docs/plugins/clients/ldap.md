@@ -4,7 +4,19 @@ This section describes the features and functionalities of the LDAP client plugi
 ## Features
 - LDAP browser
 - LDAP operations
-
+- Full Active Directory Dump
+- Custom BloodHound Ingestor
+- Operations on Users such as changing passwords, adding SPNs, adding users to a group 
+- Adding machine accounts
+- Viewing Group Policies
+- Extracting LAPS Passwords
+- Viewing group memberships
+- Enumerating trusts
+- Altering security descriptors and AD attributes(e.g. such as adding dcsync privileges, changing owner, adding to `allowedtoactonbehalfofotheridentity` attribute for Resource-Based Constrained Delegation abuse)
+- Listing Group-Managed Service Accounts
+- Enumerate Certificates and checking for vulnerable certificate templates
+- Enumeration AD objects that have delegation privileges
+ 
 ### Getting started
 To use the LDAP Client plugin, select the credentials and the target and then create a client of type SMB in the Main GUI. This will open the SMB2 client window with the selected credentials. For most operations you will need to run the `login` command to get started.
 
@@ -12,6 +24,39 @@ For more information on supported credentials, see the [credentials page](../../
 
 After sucsessfully creating an LDAP client, the LDAP browser will automatically list the host in the File Browser Window
 The ldap browser supports basic ldap listing operations, similar to ADExplorer.
+
+### Supported Authentication Types
+| Authentication Protocol | Secret Type | Description | Example |
+| ----- | ----- | ------| ----- |
+| NTLM | Password | Plaintext Password | MyPassw0rd | 
+| NTLM | NT | NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| NTLM | RC4 | RC4 NT Hash - same as NT | 8846F7EAEE8FB117AD06BDD830B7586C |
+| NTLM | AES | AES Key (contains a salt such as TEST.LOCALusername) - can be used in stead of the NT Hash | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
+| NTLM | NONE | Null authentication |  |
+| Kerberos | NT | NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| Kerberos | RC4 | RC4 NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| Kerberos | AES | AES Key (contains a salt such as TEST.LOCALusername) - can be used instead of the NT Hash | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
+| Kerberos | P12/PFX | Certificate - upload the certificate to volatile storage and then enter certfile path relative from `/browserefs/volatile`. If the certfile has a password, enter it as a secret | Administrator.pfx |
+| Kerberos | CCACHE | Kerberos credentials in binary CCACHE file format  | Administrator.ccache |
+| Kerberos | KEYTAB | Kerberos credentials in binary KEYTAB file format | Administrator.keytab |
+| Kerberos | KIRBI | Kerberos credentials in binary KIRBI file format | Administrator.kirbi |
+| Kerberos | KIRBI | Kerberos credentials in base64 KIRBI file format | doIF9DCCBfCg ...(snip)... ZXVzLmdob3N0cGFjay5sb2NhbA== |
+| Kerberos | NONE | Null authentication |  |
+| SSL | P12/PFX, PEM |  | |
+| SIMPLE | Password |  | |
+| SICILY | Password, NT Hash, AES |  | |
+
+
+**NTLM (NT LAN Manager)**: A challenge-response authentication protocol used to authenticate a client to a network server on a Windows domain. It's commonly used for SMB and LDAP in environments where Kerberos might not be feasible.
+
+**Kerberos**: A network authentication protocol designed to provide strong authentication for client/server applications by using secret-key cryptography. It's highly recommended for environments that require robust security, especially in Active Directory setups.
+
+**SSL (Secure Sockets Layer)**: Provides encryption for data transfers, creating a secure channel over potentially insecure networks. Primarily used in LDAP configurations when data security and privacy are of paramount importance.
+
+**SIMPLE**: The most basic form of authentication that transmits credentials in plain text. It is generally not recommended for secure environments unless additional security measures, like encryption, are already in place.
+
+**SICILY (Security Integrated Channel over LDAP Integrated Cryptographic Login)**: Microsoft's proprietary authentication protocol that supports multiple authentication methods including NTLM and sometimes Kerberos. It provides a more integrated authentication approach, particularly useful in Microsoft-centric environments.
+
 
 ## Commands
 As usual, all functionalities will be discussed in command groups which logically group commands of similar nature.
@@ -124,7 +169,7 @@ Changes a user's password. This will only work if you have the correct permissio
 
 - **user_dn**: The distinguished name of the user you want to change the password of. (e.g. `CN=cersei.lannister,OU=Users,DC=sevenkingdoms,DC=local`)
 - **newpass**: The new password you want to set. The new password needs to comply to the password policy! 
-- **oldpass**: {==What do I need it for? to change it myself? If I try that I get the error==}
+- **oldpass**: {==What do I need it for? to change it myself? If I try that I get the error => if you want to change your own, then you need old (if not admin), minpasswordage, complexity! constraint violation, only encrypted channel, don't have to login==}
 
 ```
 changeuserpw user_dn=CN=m.steip,OU=Crownlands,DC=sevenkingdoms,DC=local, newpass=Passw0rd1, oldpass=Passw0rd
@@ -220,6 +265,8 @@ Fetches detailed information of a computer object based on its SAMAccountName.
 #### addhostname
 Adds an additional hostname to a computer account. You need the appropriate permissions to write the hostname.
 
+{==msds-additionaldnshostname, used for https://www.thehacker.recipes/ad/movement/kerberos/delegations/unconstrained==}
+
 ##### Parameters
 
 - **user_dn**: The distinguished name of the computer account to which you want to the DNS hostname to. (e.g. `CN=KINGSLANDING,OU=Domain Controllers,DC=sevenkingdoms,DC=local`) {==Is the name of the parameter incorrect here?==}
@@ -229,6 +276,24 @@ Adds an additional hostname to a computer account. You need the appropriate perm
 
 #### pre2000
 Lists all machine account which were created a Pre-Windows 2000 compatible machine account. This computer accounts have insecure passwords set. More information can be found here: [Pre-Windows 2000 computers](https://www.thehacker.recipes/ad/movement/domain-settings/pre-windows-2000-computers)
+
+#### computeradd
+Adds a machine account with the specified password. By default any domain user can add a machine account to the Active Directory. To check if this is possible, check the `adinfo` command. If it is zero, you will need to have the permission to add machine accounts.
+
+##### Parameters
+- **computername**: The name of the computer object you want to add. {==What format? just `computer`or `computer$`?==}
+- **password**: The plain text computer password you want the computer object to have.
+
+{==Error:  Exception: 'MSLDAPClientConnection' object has no attribute 'add_computer==}
+
+#### changesamaccountname
+Changes the samaccountname attribute of an active directory object. 
+
+##### Parameters
+- **dn**: The distinguished name of the user or machine you want to change the samaccountname of. E.g. `CN=cersei.lannister,OU=Crownlands,DC=sevenkingdoms,DC=local`
+- **newname**: The new samAccountName. E.g.  `cersei.baratheon`
+
+{== 'MSLDAPClientConnection' object has no attribute 'change_samaccountname' Shouldn't that be under users?==}
 
 ### GPO
 #### gpos
@@ -243,7 +308,7 @@ This is the legacy LAPS implementation. It prints all machine accounts and plain
 #### newlaps
 This is the new Windows LAPS implementation. It prints the encrypted blobs containing of all (or some) machine account's local administrator passwords for which your user has access to. You need to decrypt these blobs using an `SMB session`. 
 
-{==How do I use this with an SMB session? do i just create the SMB session and it works automatically? Don't have LAPS in my lab==}
+{==How do I use this with an SMB session? do i just create the SMB session and it works automatically? Don't have LAPS in my lab = > more dev time needed, seperate feature later on==}
 
 ### GROUP
 #### groupmembership
@@ -299,7 +364,7 @@ Adds DCSync rights to the given user by modifying the forest's Security Descript
 
 ##### Parameters
 - **user_dn**: The user you want to add dcsync privileges for. Example: `CN=tyron.lannister,OU=Westerlands,DC=sevenkingdoms,DC=local`
-- **forest**: {==Can I just put a foreign domain such as `essos.local` here and it works? I did it and it said it's okay, but I wasn't able to dcsync or see it in done, so I guess no. What else would this be for?==}
+- **forest** (optional): {==DN Name of the forest I want to change. Write privileges to the forest DN object needed. Will use current DN of the connection if omitted. Can I just put a foreign domain such as `essos.local` here and it works? I did it and it said it's okay, but I wasn't able to dcsync or see it in done, so I guess no. What else would this be for?==}
 
 #### addprivaddmember
 Grants a user the AddMember privilege for a specific group within the domain. This action authorizes the user to add members to the group but does not include the user as a member of the group.
@@ -376,7 +441,7 @@ To effectively add permissions using commands like `addallowedtoactonbehalfofoth
 
 Resolves the username and domain for a given Security Identifier (SID).
 
-##### Prameter
+##### Parameter
 
 - sid: The Security Identifier (SID) of the user or object whose details are to be resolved.
 

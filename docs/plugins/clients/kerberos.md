@@ -3,6 +3,11 @@ This section describes the features and functionalities of the Kerberos client p
 
 ## Features
 - Kerberos operations
+- Abuse Constrained Delegation
+- Abuse Resource-Based Constrained Delegation
+- Kerberoasting
+- AS-REP Roasting
+- Abuse Kerberos vulnerabilities
 
 ## Commands
 As usual, all functionalities will be discussed in command groups which logically group commands of similar nature. 
@@ -58,7 +63,7 @@ S4u2proxy is typically combined with S4U2self to fully exploit Kerberos delegati
 
 #### s4uself
 
-S4U2self, short for "Service for User to Self", is a Kerberos extension that allows a service to request a service ticket for itself on behalf of a user. S4U2self is designed to be used in environments where a service needs to impersonate a user to access resources or perform operations, even if the user has not authenticated to the service using Kerberos. It can be used 
+S4U2self, short for "Service for User to Self", is a Kerberos extension that allows a service to request a service ticket for itself on behalf of a user. S4U2self is designed to be used in environments where a service needs to impersonate a user to access resources or perform operations, even if the user has not authenticated to the service using Kerberos. It can be used for resource-based constrained delegation abuse or constrained delegation abuse.
 
 It can also be used to take a valid TGT of a computer account and turn it into a valid TGT for a user with local admin rights on the machine. 
 If you have a TGT of a Machine e.g. WKSTN-2$ (e.g. via unconstrained delegation) you can abuse s4u2self to gain Remote Code Execution with a local admin. Using a TGT of a machine account it is not possible to access the machine remotely because machines do not get remote local admin access on themselves. What we can do instead is abuse S4U2Self to obtain a usable TGS as a user we know is a local admin (e.g. a domain admin). (Another way to get local admin would be a dcsync, but that only works if the target machine is the DC) To abuse this scenario, use the TGT of the machine account to create a kerberos client and then enter any local admin of that machine as the `targetuser` parameter.
