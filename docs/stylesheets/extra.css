@@ -48,13 +48,17 @@
 }
 
 .md-typeset h3 {
-    font-weight: 600;
+    font-weight: 700;
     color: black;
 }
 
 .md-typeset h4 {
-    font-weight: 400;
+    font-weight: 600;
     color: black;
+}
+
+.md-typeset a {
+    color: blue;
 }
 
 code {

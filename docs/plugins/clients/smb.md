@@ -1,14 +1,58 @@
 # SMB Client plugin
 The SMB Client plugin within the "octopwn" framework, is designed to interact with a target system via SMB and DCE/RPC operations. 
 
-The SMB Client plugin primarily communicates with remote services via SMB pipes. Unlike the traditional method of connecting to the portmapper, and then connecting to the services via specific TCP or UDP ports, the smb plugin uses named pipes that can be interacted with via the IPC$ share. This method allows for reading and writing data as if interacting with a regular socket but over SMB.
+## Features
+
+- SMB File Browser
+- File operations
+- User/Group/Session enumeration
+- Windows Service operations
+- Registry operations
+- Task operations
+- Printer operations
+- Certificate operations in the domain (ESC1 and ESC3)
+- NTLM Coercion (printerbug)
+- Command Execution
+- Secrets dumping (LSASS, Registry, DPAPI, DCSync)
+- Secrets hunting (gpppasswords)
+- Vulnerability exloitation (printnightmare)
 
 ## Getting Started
 
 To use the SMB Client plugin, select the credentials and the target and then create a client of type SMB in the Main GUI. This will open the SMB2 client window with the selected credentials. For most operations you will need to run the `login` command to get started.
 
+For more information on supported credentials, see the [credentials page](../../user-guide/credentials.html). 
+
 After successfully creating the client, the SMB files will automatically be mounted as `smb-<clientid>` in the file browser (accessible via the FILES menu in the clients).
 The file browser supports basic file operations as you'd expect from a file browser like downloading and uploading files, removing and creating directories.
+
+### Technical Background 
+
+The SMB Client plugin primarily communicates with remote services via SMB pipes. Unlike the traditional method of connecting to the portmapper, and then connecting to the services via specific TCP or UDP ports, the smb plugin uses named pipes that can be interacted with via the IPC$ share. This method allows for reading and writing data as if interacting with a regular socket but over SMB.
+
+### Supported Authentication Types
+| Authentication Protocol | Secret Type | Description | Example |
+| ----- | ----- | ------| ----- |
+| NTLM | Password | Plaintext Password | MyPassw0rd | 
+| NTLM | NT | NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| NTLM | RC4 | RC4 NT Hash - same as NT | 8846F7EAEE8FB117AD06BDD830B7586C |
+| NTLM | AES | AES Key (contains a salt such as TEST.LOCALusername) - can be used in stead of the NT Hash | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
+| NTLM | NONE | Null authentication |  |
+| Kerberos | NT | NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| Kerberos | RC4 | RC4 NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
+| Kerberos | AES | AES Key (contains a salt such as TEST.LOCALusername) - can be used instead of the NT Hash | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
+| Kerberos | P12/PFX | Certificate - upload the certificate to volatile storage and then enter certfile path relative from `/browserefs/volatile`. If the certfile has a password, enter it as a secret | Administrator.pfx |
+| Kerberos | CCACHE | Kerberos credentials in binary CCACHE file format  | Administrator.ccache |
+| Kerberos | KEYTAB | Kerberos credentials in binary KEYTAB file format | Administrator.keytab |
+| Kerberos | KIRBI | Kerberos credentials in binary KIRBI file format | Administrator.kirbi |
+| Kerberos | KIRBI | Kerberos credentials in base64 KIRBI file format | doIF9DCCBfCg ...(snip)... ZXVzLmdob3N0cGFjay5sb2NhbA== |
+| Kerberos | NONE | Null authentication |  |
+
+
+**NTLM (NT LAN Manager)**: A challenge-response authentication protocol used to authenticate a client to a network server on a Windows domain. It's commonly used for SMB and LDAP in environments where Kerberos might not be feasible.
+
+**Kerberos**: A network authentication protocol designed to provide strong authentication for client/server applications by using secret-key cryptography. It's highly recommended for environments that require robust security, especially in Active Directory setups.
+
 
 ## Commands
 As usual, all functionalities will be discussed in command groups which logically group commands of similar nature.
@@ -259,7 +303,7 @@ This abuses Misconfigured Certificate Templates (ESC1) by requesting a certifica
 !!! question "Troubleshooting Authentication"
 	- If no client gets created, choose Kerberos, not NTLM, as Authentication Protocol, when creating the client
 	- If you get the error `KDC_ERR_S_PRINCIPAL_UNKNOWN: Server not found in Kerberos database` on login: The target needs to have the hostname set, the IP is not enough, otherwise Kerberos won't work. 
-	- If you get the error `KDC_ERR_PADATA_TYPE_NOSUPP: KDC has no support for PADATA type (pre-authentication data)` on login: This means that Kerberos does not allow certificate-based authentication. Still, you can use LDAP SSL authentication, instead of SMB to authenticate against LDAP and then do LDAP stuff like adding yourself to a group or changing objects. For that create an LDAP Client and choose SSL as Authentication Protocol.
+	- If you get the error `KDC_ERR_PADATA_TYPE_NOSUPP: KDC has no support for PADATA type (pre-authentication data)` on login: This means that Kerberos does not allow certificate-based authentication. Still, you can use LDAPS, instead of SMB to authenticate against LDAP and then do LDAP stuff like adding yourself to a group or changing objects. For that create an LDAP**S** Client and use .
 
 ##### Parameters
 
@@ -274,7 +318,7 @@ This abuses Misconfigured Certificate Templates (ESC1) by requesting a certifica
 #### certreqonbehalf
 machine account on behalf of other person
 
-TODO
+{==TODO==}
 
 ### NTLM COERCION
 
@@ -343,11 +387,18 @@ In contrast to other tools allowing a dcsync, the password history and AES keys 
 
 The dcsync output will be saved to the volatile browser storage in a text file and automatically saved into the OctoPwn credentials hub. Please don't forget to download the files before reloading your browser session.
 
-For the dcsync to work you need the target machine in the current client needs to be a domain controller. You to be logged-in with credentials with the appropriate privileges as explained above.
+For the dcsync to work, the target in the current client needs to be the domain controller of the domain you want to sync. You need to be logged-in with credentials with the appropriate privileges as explained above.
+
+{==How do I sync from a different domain? I added dcsync privileges to a foreign domain object, logged in on the other DC with that user and get==}
+
+```
+ERROR_DS_DRA_BAD_DN - The distinguished name specified for this replication operation is invalid.
+```
 
 ##### Parameter 
 
- - **username** (optional): Specify the username of the user you want to dcsync. If you don't supply a username all users will be synced. 
+- **username** (optional): Specify the username of the user you want to dcsync. If you don't supply a username all users will be synced. 
+- **storesecrets**: {==what does this do?==}
 
 #### lsassdump
 
@@ -369,16 +420,27 @@ The `cpasswd` feature in the SMB Client plugin targets a well-known vulnerabilit
 ### VULNERABILITIES
 #### printnightmare
 
-The `printnightmare` command targets the CVE-2021-34527 vulnerability, commonly referred to as PrintNightmare. This exploit leverages flaws in the Windows Print Spooler service, communicating over the RPRN protocol. Despite Microsoft's patches, specific Group Policy settings can leave systems vulnerable, allowing for the remote execution of arbitrary code with system privileges. To exploit this vulnerability, a malicious DLL must be uploaded to a location accessible by the target machine, such as `\\localhost\c$\path\to\dll.dll`. The exploit then executes this DLL as the SYSTEM user, gaining high-level privileges.
+The `printnightmare` command targets the CVE-2021-34527 vulnerability, commonly referred to as PrintNightmare. This exploit leverages flaws in the Windows Print Spooler service, communicating over the RPRN protocol. Despite Microsoft's patches, specific Group Policy settings can leave systems vulnerable, allowing for the remote execution of arbitrary code with system privileges. To exploit this vulnerability, a malicious DLL must be uploaded to a location accessible by the target machine, such as `\\localhost\c$\path\to\dll.dll`. The exploit then executes this DLL as the SYSTEM user, gaining high-level privileges. - accessible via named pipe via rpc channel
+
+Local Privesc + remote privesc
+
+- SERVICE is not available
+- service cannot be fetched from the remote source 
+
+scanner module is availble - smbprintnightmare - tell you if vulnerable or not 
+
 
 **Parameters**:
 
-*   **share**: Specifies the path where the malicious DLL is stored. For instance, `\\localhost\c$\path\to\dll.dll`.
-*   **driverpath** (optional?): This parameter typically specifies the driver path used by the print spooler to load the DLL. [???]
+*   **share**: Specifies the path where the malicious DLL is stored. For instance, `\\localhost\c$\path\to\dll.dll`. Needs to be readable by system. 
+*   **driverpath** (optional): after triggering first stage, server fetches dll, not invoking it, will put it into system32, invoke the dll that was put in system32. you need the path where it was put into. for some reasons the driver might be in a different place, you can override the path here to use the second stage with this one.
+This parameter typically specifies the driver path used by the print spooler to load the DLL. [???]
 
 #### parprintnightmare
 
-The `parprintnightmare` command exploits the same vulnerability as `printnightmare` but uses DCERPC - PAR (Print System Asynchronous Remote Protocol) for communication. This variant functions similarly by executing a malicious DLL uploaded to a share accessible by the target machine. It serves as an alternative method to trigger the exploit.
+some cases where this works but the above does not work
+
+The `parprintnightmare` command exploits the same vulnerability as `printnightmare` but uses DCERPC - PAR (Print System Asynchronous Remote Protocol) for communication. This variant functions similarly by executing a malicious DLL uploaded to a share accessible by the target machine. It serves as an alternative method to trigger the exploit. - only accessible via RPC
 
 **Parameters**:
 
