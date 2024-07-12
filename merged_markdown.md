@@ -1419,7 +1419,7 @@ Currently, an issue with our registration system results in the first verificati
 
 #### Security Practices
 
-For users utilizing the live system on [wasm.octopwn.com](https://wasm.octopwn.com):
+For users utilizing the live system on [live.octopwn.com](https://live.octopwn.com):
 
 1. Ensure that OctoPwn is always loaded via HTTPS.
 2. Establish a certificate for the WSNET proxy.
