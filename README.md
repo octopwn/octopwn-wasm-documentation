@@ -1,2 +1,2 @@
-# octopwn-wasm-documentation
-Documentation for the OctoPwn WASM framework
+# octopwn-documentation
+Documentation for all editions of OctoPwn.
