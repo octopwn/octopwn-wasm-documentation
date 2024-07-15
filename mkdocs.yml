@@ -46,7 +46,7 @@ nav:
     - 'Security considerations': 'security.md'
     - 'Licenses': 'licenses.md'
   - 'Clients': 
-    - 'Overview': './plugins/overview.md'
+      - 'Overview': './plugins/overview.md'
       - 'SMB' : './plugins/clients/smb.md'
       - 'LDAP' : './plugins/clients/ldap.md'
       - 'Kerberos' : './plugins/clients/kerberos.md'
