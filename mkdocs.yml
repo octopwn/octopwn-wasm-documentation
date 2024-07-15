@@ -35,7 +35,7 @@ markdown_extensions:
   - pymdownx.tilde
 docs_dir: 'docs'
 nav:
-  - 'Home': 'index.md'
+  - 'Getting started':
     - 'Getting Started' : 'user-guide/gettingstarted.md'
     - 'Modes of Operation': 'user-guide/modesofoperation.md'
     - 'Core Functionalities': 'user-guide/corefunctionalities.md'
@@ -84,4 +84,3 @@ nav:
       - 'notes': './plugins/utils/notes.md'
       - 'plugin': './plugins/utils/plugin.md'
       - 'sqlitebrowser': './plugins/utils/sqlitebrowser.md'
-  - 'Proxies': 
