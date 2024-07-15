@@ -35,7 +35,7 @@ markdown_extensions:
   - pymdownx.tilde
 docs_dir: 'docs'
 nav:
-  - 'Home':
+  - 'Getting started':
     - 'Getting Started' : 'user-guide/gettingstarted.md'
     - 'Modes of Operation': 'user-guide/modesofoperation.md'
     - 'Core Functionalities': 'user-guide/corefunctionalities.md'
@@ -45,9 +45,8 @@ nav:
   - 'Misc':
     - 'Security considerations': 'security.md'
     - 'Licenses': 'licenses.md'
-  - 'Plugins': 
+  - 'Clients': 
     - 'Overview': './plugins/overview.md'
-    - 'Clients': 
       - 'SMB' : './plugins/clients/smb.md'
       - 'LDAP' : './plugins/clients/ldap.md'
       - 'Kerberos' : './plugins/clients/kerberos.md'
@@ -56,7 +55,7 @@ nav:
       - 'SSH' : './plugins/clients/ssh.md'
       - 'WinRM' : './plugins/clients/winrm.md'
       - 'RDP' : './plugins/clients/rdp.md'
-    - 'Scanners': 
+  - 'Scanners': 
       - 'Overview': './plugins/scanners/index.md'
       - 'Jackdaw': './plugins/scanners/jackdaw.md'
       - 'krb5userenum': './plugins/scanners/krb5userenum.md'
@@ -73,7 +72,7 @@ nav:
       - 'smbsession': './plugins/scanners/smbsession.md'
       - 'snaffler': './plugins/scanners/snaffler.md'
       - 'tcpportscanner': './plugins/scanners/tcpportscanner.md'
-    - 'Utils':
+  - 'Utilities': 
       - 'Overview': './plugins/utils/index.md'
       - 'pypykatz' : './plugins/utils/pypykatz.md'
       - 'dpapi' :  './plugins/utils/dpapi.md'
