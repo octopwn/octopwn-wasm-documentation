@@ -43,7 +43,7 @@ Uploading credential files into OctoPwn enables the use of various types of cred
 1.  **Upload the File:**
     
     *   Open OctoPwn in your browser.
-    *   Drag and drop your credential file into the browser window. This uploads the file to the volatile browser storage of OctoPwn.
+    *   Drag and drop your credential file into the file browser, available on the top menu. This uploads the file to the volatile browser storage of OctoPwn.
     *   Files uploaded this way are stored temporarily in `/browserfs/volatile`, accessible via the FILE Browser in the clients section on the top right.
 
 2.  **Use the Uploaded File Path as a Secret:**
