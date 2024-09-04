@@ -5,6 +5,7 @@ steps:
   args:
     - '-c'
     - |
+      apt-get update && apt-get install -y zip  # Install zip utility
       python -m venv venv
       source venv/bin/activate
       pip install --upgrade pip
@@ -21,11 +22,13 @@ steps:
       mkdocs build
 
 # Step 3: Compress the documentation files into a .zip archive
-- name: 'gcr.io/cloud-builders/zip'
+- name: 'python:3.11-slim'
+  entrypoint: 'bash'
   args:
-    - '-r'
-    - 'site.zip'
-    - 'site'
+    - '-c'
+    - |
+      apt-get update && apt-get install -y zip  # Ensure zip is installed
+      zip -r site.zip site
 
 # Step 4: Upload the documentation files to the bucket
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
