@@ -20,7 +20,14 @@ steps:
       source venv/bin/activate
       mkdocs build
 
-# Step 3: Upload the results to a Google Cloud Storage bucket
+# Step 3: Compress the documentation files into a .zip archive
+- name: 'gcr.io/cloud-builders/zip'
+  args:
+    - '-r'
+    - 'site.zip'
+    - 'site'
+
+# Step 4: Upload the documentation files to the bucket
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   args:
     - 'gsutil'
@@ -29,6 +36,14 @@ steps:
     - '-r'
     - 'site'
     - 'gs://docs.octopwn.com/'
+
+# Step 5: Upload the .zip file to the same bucket
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args:
+    - 'gsutil'
+    - 'cp'
+    - 'site.zip'
+    - 'gs://docs.octopwn.com/site.zip'
 
 # Define the timeout for the build
 timeout: '1200s'
