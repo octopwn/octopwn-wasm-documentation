@@ -1,0 +1,48 @@
+name: Deploy to production
+# Description:
+# This workflow will take the page, zip it, and upload it to a Google Cloud Storage bucket.
+
+on:
+  push:
+    branches:
+      - main # Trigger on push to master branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Use a linux runner
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    
+    steps:        
+    - uses: 'actions/checkout@v4'
+      with:
+        fetch-depth: 0
+
+    - name: Install Dependencies
+      run: |
+        apt-get update && apt-get install -y zip  # Install zip utility
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install mkdocs mkdocs-material  # Add other requirements as needed
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      shell: bash
+    
+    - name: Build the documentation
+      run: |
+        source venv/bin/activate
+        mkdocs build
+      shell: bash
+    
+    - name: Compress the documentation files into a .zip archive
+      run: |
+        zip -r site.zip site
+      shell: bash
+
+    - name: Publish to cloudflare pages
+      uses: cloudflare/wrangler-action@v3
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        command: pages deploy site --project-name=docs-octopwn-com
