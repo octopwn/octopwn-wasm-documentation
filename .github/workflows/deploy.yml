@@ -38,6 +38,7 @@ jobs:
     - name: Compress the documentation files into a .zip archive
       run: |
         zip -r site.zip site
+        cp site.zip ./site/site.zip
       shell: bash
 
     - name: Publish to cloudflare pages
