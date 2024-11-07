@@ -14,6 +14,8 @@ If you need further help, please [write us here](https://octopwn.com/support) or
 **Current public Beta version:** none  
 **Currently in development:** New UI, Attacks, improved file uploader, bug fixes
 
+## Release notes for v1.1:
+
 ## Release notes for v1.0:  
 
 **GUI Enhancements:**  
