@@ -1,11 +1,11 @@
-name: Deploy to production
+name: Deploy to staging
 # Description:
 # This workflow will take the page, zip it, and upload it to a Google Cloud Storage bucket.
 
 on:
-  create:
-    tags:
-      - '*' # Run this workflow on any tag creation
+  push:
+    branches:
+      - main # Trigger on push to master branch
 
 jobs:
   build:
@@ -46,4 +46,4 @@ jobs:
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        command: pages deploy site --project-name=docs-octopwn-com
+        command: pages deploy site --project-name=staging-live-octopwn-com
