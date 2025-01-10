@@ -93,8 +93,8 @@ The Kerberoast attack allows you to retrieve TGS tickets of users with an SPN re
 - **spn**: The samAccountName of the user you want to get the Kerberos ticket of in the format `samAccountName@domain`, e.g. `mssqlsvc@sevenkingdoms.local` OR the session id of the LDAP client session, which will kerberoast all users.
 
 - **crossdomain** (optional): If the targeted user is in another domain you need to set this to "True". Otherwise you can ignore it.
-- **etype_tgt** (optional): {==???==}
-- **etype_tgs** (optional): Encryption types to use for the resuting TGS ticket. Default: 23,17,18
+- **etype_tgt** (optional): Encryption types to use when requesting the TGT. Default: `23,17,18`
+- **etype_tgs** (optional): Encryption types to use for the resulting TGS ticket. Default: `23,17,18`
 
 #### asreproast
 Performs the asreproast attack, prints the resulting ticket to the console which can then be cracked offline. 
@@ -110,7 +110,7 @@ ASREPRoast is a type of security exploit targeting users who do not have the Ker
 
 ### PKI
 #### nt
-Fetches the NT hash of the current user. Only works if you created the session using a certificate type credential (choose Auth protocol P12). Otherwise you will get the exception `'AIOKerberosClient' object has no attribute 'get_NT_from_PAC'`. 
+Fetches the NT hash of the current user. Only works if you created the session using a certificate type credential (choose Auth protocol P12). Otherwise you will get the exception `'AIOKerberosClient' object has no attribute 'get_NT_from_PAC'`. This is useful for further lateral movement, if you want to authenticate to a service that does not support certificate authentication or for ease of use in the attack. 
 
 ### ATTACKS
 #### cve202233679

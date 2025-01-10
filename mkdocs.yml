@@ -33,54 +33,91 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.tilde
+  - pymdownx.tabbed:
+      alternate_style: true
 docs_dir: 'docs'
 nav:
   - 'Getting started':
     - 'Getting Started' : 'user-guide/gettingstarted.md'
     - 'Modes of Operation': 'user-guide/modesofoperation.md'
     - 'Core Functionalities': 'user-guide/corefunctionalities.md'
-    - 'Credentials': 'user-guide/credentials.md'
-  - 'Setup':
     - 'Install': 'setup/install.md'
-  - 'Misc':
-    - 'Security considerations': 'security.md'
-    - 'Licenses': 'licenses.md'
+
   - 'Clients': 
       - 'Overview': './plugins/overview.md'
+      - 'DNS' : './plugins/clients/dns.md'
       - 'SMB' : './plugins/clients/smb.md'
       - 'LDAP' : './plugins/clients/ldap.md'
       - 'Kerberos' : './plugins/clients/kerberos.md'
-      - 'DNS' : './plugins/clients/dns.md'
-      - 'DRSUAPI' : './plugins/clients/drsuapi.md'
+      - 'DCEDRSUAPI' : './plugins/clients/dcedrsuapi.md'
+      - 'NETCAT' : './plugins/clients/netcat.md'
+      - 'NFS3' : './plugins/clients/nfs3.md'
+      - 'NTP' : './plugins/clients/ntp.md'
+      - 'SNMP' : './plugins/clients/snmp.md'
       - 'SSH' : './plugins/clients/ssh.md'
       - 'WinRM' : './plugins/clients/winrm.md'
       - 'RDP' : './plugins/clients/rdp.md'
+  - 'Credential':
+      - 'Overview': 'user-guide/credentials.md'
+  - 'Target':
+      - 'Overview': 'user-guide/target.md'
   - 'Scanners': 
       - 'Overview': './plugins/scanners/index.md'
+      - 'ipmicaps': './plugins/scanners/ipmicaps.md'
+      - 'ipmicipherzero': './plugins/scanners/ipmicipherzero.md'
       - 'Jackdaw': './plugins/scanners/jackdaw.md'
-      - 'krb5userenum': './plugins/scanners/krb5userenum.md'
+      - 'krb5user': './plugins/scanners/krb5user.md'
+      - 'ldapsig': './plugins/scanners/ldapsig.md'
+      - 'nfs3file': './plugins/scanners/nfs3file.md'
       - 'rdpcap': './plugins/scanners/rdpcap.md'
       - 'rdplogin': './plugins/scanners/rdplogin.md'
       - 'rdpscreen' : './plugins/scanners/rdpscreen.md'
       - 'smbadmin' : './plugins/scanners/smbadmin.md'
       - 'smbfile': './plugins/scanners/smbfile.md'
       - 'smbiface': './plugins/scanners/smbiface.md'
-      - 'smbos': './plugins/scanners/smbos.md'
+      - 'smblaps': './plugins/scanners/smblaps.md'
+      - 'smbfinger': './plugins/scanners/smbfinger.md'
       - 'smbprintnightmare': './plugins/scanners/smbprintnightmare.md'
-      - 'smbprotocol': './plugins/scanners/smbprotocol.md'
-      - 'smbregdump' : './plugins/scanners/smbregdump.md'
+      - 'smbsig': './plugins/scanners/smbsig.md'
+      - 'smbproto': './plugins/scanners/smbproto.md'
+      - 'smbshare': './plugins/scanners/smbshare.md'
       - 'smbsession': './plugins/scanners/smbsession.md'
       - 'snaffler': './plugins/scanners/snaffler.md'
-      - 'tcpportscanner': './plugins/scanners/tcpportscanner.md'
+      - 'portscan': './plugins/scanners/portscan.md'
+  - 'Servers': 
+      - 'Overview': './plugins/servers/overview.md'
+      - 'llmnr': './plugins/servers/llmnr.md'
+      - 'mdns': './plugins/servers/mdns.md'
+      - 'relay': './plugins/servers/relay.md'
+
+
+
   - 'Utilities': 
       - 'Overview': './plugins/utils/index.md'
+      - 'chat' : './plugins/utils/chat.md'
+      - 'http' : './plugins/utils/http.md'
+      - 'ide' : './plugins/utils/ide.md'
+      - 'neo4j' : './plugins/utils/neo4j.md'
+      - 'python-console' : './plugins/utils/python-console.md'
+      - 'roadtools' : './plugins/utils/roadtools.md'
       - 'pypykatz' : './plugins/utils/pypykatz.md'
       - 'dpapi' :  './plugins/utils/dpapi.md'
       - 'jackdaw': './plugins/utils/jackdaw.md'
       - 'duckysvc': './plugins/utils/duckysvc.md'
-      - 'chat': './plugins/utils/chat.md'
       - 'masscan': './plugins/utils/masscan.md'
       - 'nmap': './plugins/utils/nmap.md'
-      - 'notes': './plugins/utils/notes.md'
-      - 'plugin': './plugins/utils/plugin.md'
-      - 'sqlitebrowser': './plugins/utils/sqlitebrowser.md'
+      - 'pluginloader': './plugins/utils/pluginloader.md'
+  - 'Attacks':
+      - 'Overview': './plugins/attacks/overview.md' 
+      - 'ipmihash': './plugins/attacks/ipmihash.md'
+      - 'kerberoast': './plugins/attacks/kerberoast.md'
+      - 'dpapi': './plugins/attacks/dpapi.md'
+      - 'smbregdump': './plugins/attacks/smbregdump.md'
+      - 'smbregdump2': './plugins/attacks/smbregdump2.md'
+
+      - 'timeroast': './plugins/attacks/timeroast.md'
+
+
+  - 'Misc':
+    - 'Security considerations': 'security.md'
+    - 'Licenses': 'licenses.md'

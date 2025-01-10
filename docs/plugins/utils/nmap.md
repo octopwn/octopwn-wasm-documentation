@@ -1,5 +1,7 @@
 
-This plugin parses NMAP XML files and supports some basic processing on the results, as well as capable of adding the hosts to the `Targets Window`
+This plugin parses NMAP XML files and supports some basic processing on the results, as well as capable of adding the hosts to the `Targets Window`. Same as the Targets menu. 
+
+Additionally it allows queries on hosts, ips ports and services on nmap xml files.
 
 ## Commands
 As usual, all functionalities will be discussed in command groups which logically group commands of similar nature.

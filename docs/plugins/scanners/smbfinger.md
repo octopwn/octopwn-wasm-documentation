@@ -1,17 +1,25 @@
-# SMB Admin Scanner (smbadmin)
+# SMB Fingerprinting Scanner (smbfinger)
 
-The **SMB Admin Scanner** in OctoPwn performs SMB login attempts and determines whether the provided account has administrative privileges on the target systems. This scanner is particularly useful for identifying systems that can be used for lateral movement with the gathered credentials.
+The **SMB Fingerprinting Scanner** in OctoPwn enumerates NTLM handshake information from SMB servers, providing details about the target environment. This scanner is particularly useful for initial reconnaissance, enabling penetration testers to gather domain and system details, such as domain names, OS versions, and local time.
+
+The following details are gathered during the scan:
+
+- **domainname**: The domain name of the target.
+- **computername**: The target's computer name.
+- **dnsforestname**: The DNS forest name of the domain.
+- **dnscomputername**: The target's DNS computer name.
+- **dnsdomainname**: The DNS domain name of the target.
+- **local_time**: The current local time on the target system.
+- **os_major_version**: The major version of the target's operating system.
+- **os_minor_version**: The minor version of the target's operating system.
+- **os_build**: The OS build number.
+- **os_guess**: An educated guess of the target's operating system.
 
 ---
 
 ## Parameters
 
 ### Normal Parameters
-
-#### credential
-Specifies the ID of the credential to use for authentication.
-
-Enter the ID of the credential stored in the Credentials Window.
 
 #### targets
 Specifies the targets to scan.
@@ -29,45 +37,31 @@ A list of targets can be specified in the following formats:
 
 ### Advanced Parameters
 
-#### authtype
-Specifies the authentication protocol.
+#### __info
+This parameter is just for information purposes.
 
-Available protocols:
-
-- `NTLM`
-- `Kerberos`
+#### __resultHeaders
+Defines the headers for the scan results. Do not modify, unless you want to remove existing headers from the result.
 
 #### dialect
 Specifies the SMB connection dialect. Fixed to `SMB2` for this scanner.
-
-#### krbetypes
-Specifies the Kerberos encryption types to use during the scan.
-
-Provide a comma-separated list of encryption types (e.g., `23,17,18`).
-
-#### krbrealm
-Specifies the Kerberos realm to use.
-
-Enter the Kerberos realm (domain name) for authentication.
-
 #### maxruntime
 Specifies the maximum runtime for the scanner.
-
 #### proxy
 Specifies the proxy ID to use for the scan.
 
 Enter the ID of the proxy to route the scan through. Proxies must be configured in the Proxy Window.
-
 #### resultsfile
 Specifies a file for saving the scan results.
 
 The file will be saved in OctoPwn’s `/browserefs/volatile` directory.
-
 #### showerrors
 Determines whether errors encountered during the scan should be displayed.
-
 #### timeout
 Sets the timeout (in seconds) for each target.
 
 #### workercount
 Specifies the number of parallel workers for the scan.
+
+#### wsnetreuse
+Internal parameter. Do not modify.

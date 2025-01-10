@@ -1,6 +1,6 @@
-# RDP Capabilities Scanner (rdpcap)
+# Port Scanner (portscan)
 
-The **RDP Capabilities Scanner** in OctoPwn enumerates Remote Desktop Protocol (RDP) settings and capabilities on target systems. This scanner identifies supported authentication methods and encryption protocols for RDP connections, such as restrictedadmin mode. This can be useful to find hosts that allow authenticating via hash only, as only hosts with restrictedadmin mode enabled can be used to authenticate via NTLM hash. 
+The **Port Scanner** in OctoPwn performs basic TCP port scanning on specified targets. While functional, this scanner is less feature-rich compared to dedicated tools like **Nmap**, **Masscan**, or **Unicornscan**. It is recommended to use this scanner only when those tools are unavailable.
 
 ---
 
@@ -8,11 +8,16 @@ The **RDP Capabilities Scanner** in OctoPwn enumerates Remote Desktop Protocol (
 
 ### Normal Parameters
 
-#### credential
-Specifies the ID of the credential to use for authentication.
+#### ports
+Specifies the ports to scan.
 
-Enter the ID of the credential stored in the Credentials Window.
+A comma-separated list of ports to include in the scan. Example: `22,88,443,445,3389`. 
 
+A more comprehensive list may include: `25,80,88,443,445,8080,8443,5985,5986,3389,139,22,21,69,389,161,1433,135,152`
+#### protocol
+Specifies the protocol for the scan.
+
+Currently, only `TCP` is supported for port scanning.
 #### targets
 Specifies the targets to scan.
 
@@ -29,28 +34,6 @@ A list of targets can be specified in the following formats:
 
 ### Advanced Parameters
 
-#### authtype
-Specifies the authentication protocol.
-
-Available protocols:
-- `NTLM`
-- `Kerberos`
-
-#### dialect
-Specifies the connection dialect.
-
-Defines the protocol used for the RDP connection. Fixed to `RDP` for this scanner.
-
-#### krbetypes
-Specifies the Kerberos encryption types to use during the scan.
-
-Provide a comma-separated list of encryption types (e.g., `23,17,18`).
-
-#### krbrealm
-Specifies the Kerberos realm to use.
-
-Enter the Kerberos realm (domain name) for authentication.
-
 #### maxruntime
 Specifies the maximum runtime for the scanner.
 
@@ -63,7 +46,6 @@ Enter the ID of the proxy to route the scan through. Proxies must be configured 
 Specifies a file for saving the scan results.
 
 The file will be saved in OctoPwn’s `/browserefs/volatile` directory.
-
 #### showerrors
 Determines whether errors encountered during the scan should be displayed.
 
@@ -72,3 +54,5 @@ Sets the timeout (in seconds) for each target.
 
 #### workercount
 Specifies the number of parallel workers for the scan.
+#### wsnetreuse
+Internal parameter. Do not modify.

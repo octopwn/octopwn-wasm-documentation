@@ -1,10 +1,7 @@
-
-Jackdaw domain graphing and password cracking excercise tool
-
-
+This is subset of the features of the [Jackdaw](https://github.com/skelsec/jackdaw) domain graphing and password cracking tool. More information is found on it's github page. 
 ## Domain graphing
 The SQLite database file contains all information which is needed to create one or multiple relationship graphs of domain objects.  
-To acieve this, the first step is to use the `dbload` or `bhimport` commands. This graph cache file will then be interpreted by a graph library which can be `networkx` or `igraph`. By default we ship OctoPwn with `networkx` for licensing reasons, but `igraph` is much more performant. After the graph has been created in memory it is ready to be used by the 
+To achieve this, the first step is to use the `dbload` or `bhimport` commands. This graph cache file will then be interpreted by a graph library which can be `networkx` or `igraph`. By default we ship OctoPwn with `networkx` for licensing reasons, but `igraph` is much more performant. After the graph has been created in memory it is ready to be used by the 
 
 
 ## Commands
