@@ -1,17 +1,15 @@
-# RDP Capabilities Scanner (rdpcap)
+# SMB Signature Scanner (smbsig)
 
-The **RDP Capabilities Scanner** in OctoPwn enumerates Remote Desktop Protocol (RDP) settings and capabilities on target systems. This scanner identifies supported authentication methods and encryption protocols for RDP connections, such as restrictedadmin mode. This can be useful to find hosts that allow authenticating via hash only, as only hosts with restrictedadmin mode enabled can be used to authenticate via NTLM hash. 
+The **SMB Signature Scanner** in OctoPwn checks whether SMB signing is enabled and whether it is enforced on target SMB servers. SMB signing ensures the integrity of SMB messages by adding a cryptographic signature to each message. However, if SMB signing is enabled but not enforced, attackers can perform **SMB relaying**.
 
+**SMB Relaying** is an attack that allows adversaries to intercept and relay SMB authentication requests to another target, effectively impersonating the victim. This can be used to gain unauthorized access to resources or escalate privileges within a network. Note that OctoPwn has built-in SMB Relaying capabilities with the [Relaying Server](../servers/relay.html).
+
+subset of smbproto - will only check if signing is enabled and enforced 
 ---
 
 ## Parameters
 
 ### Normal Parameters
-
-#### credential
-Specifies the ID of the credential to use for authentication.
-
-Enter the ID of the credential stored in the Credentials Window.
 
 #### targets
 Specifies the targets to scan.
@@ -29,31 +27,16 @@ A list of targets can be specified in the following formats:
 
 ### Advanced Parameters
 
-#### authtype
-Specifies the authentication protocol.
+#### __info
+This parameter is just for information purposes.
 
-Available protocols:
-- `NTLM`
-- `Kerberos`
+#### __resultHeaders
+Defines the headers for the scan results. Do not change this.
 
 #### dialect
-Specifies the connection dialect.
-
-Defines the protocol used for the RDP connection. Fixed to `RDP` for this scanner.
-
-#### krbetypes
-Specifies the Kerberos encryption types to use during the scan.
-
-Provide a comma-separated list of encryption types (e.g., `23,17,18`).
-
-#### krbrealm
-Specifies the Kerberos realm to use.
-
-Enter the Kerberos realm (domain name) for authentication.
-
+Specifies the SMB connection dialect. Fixed to `SMB2` for this scanner.
 #### maxruntime
 Specifies the maximum runtime for the scanner.
-
 #### proxy
 Specifies the proxy ID to use for the scan.
 
@@ -66,9 +49,11 @@ The file will be saved in OctoPwn’s `/browserefs/volatile` directory.
 
 #### showerrors
 Determines whether errors encountered during the scan should be displayed.
-
 #### timeout
 Sets the timeout (in seconds) for each target.
 
 #### workercount
 Specifies the number of parallel workers for the scan.
+
+#### wsnetreuse
+Internal parameter. Do not modify.

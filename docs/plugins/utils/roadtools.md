@@ -1,0 +1,1 @@
+ROADtools is a framework to interact with Azure AD. Some functions have been ported into octowpn. For details see the [roadtools documentation](https://github.com/dirkjanm/ROADtools).

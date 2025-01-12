@@ -1,1 +1,1 @@
-Chat
+This feature is undocumented for now.

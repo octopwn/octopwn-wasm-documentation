@@ -1,1 +1,1 @@
-TBD
+This feature is only applicable to OctoPwn running on Pendrives. 

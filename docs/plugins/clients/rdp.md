@@ -1,7 +1,6 @@
 # RDP Client plugin
 This section describes the features and functionalities of the RDP client plugin. 
 
-{==Screen not shown after login==}
 
 ## Tips
 If you enable recording please remember that the resulting file will be stored in your browser's memory.  
@@ -35,12 +34,12 @@ Copy-pase of text data works, but depending on the browser and hosting location 
 ### CONNECTION
 #### login
 You can set the resolution up front, as screen resizing is not implemented yet.  
-The `record` option allows you to record the entire RDP session to an mp4 file.
+The `record` option allows you to record the entire RDP session to an mp4 file. After logging in switch to the screen tab to view the screen. 
 
 #### logout
 Ends the RDP session. This does not log out the user, but disconnects the session
 
-{==these are missing in the GUI, I'll just leave the text here as it is for now==}
+{==these following are missing in the GUI, I'll just leave the text here as it is for now==}
 
 ### CLIPBOARD OPERATIONS
 #### paste
