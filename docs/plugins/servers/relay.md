@@ -8,14 +8,16 @@ NTLM relaying allows attackers to impersonate a victim by capturing their NTLM a
 
 ### What Is NTLM Relaying?
 NTLM relaying is a type of Man-in-the-Middle (MitM) attack where an attacker captures NTLM authentication requests from a victim and forwards them to a target server. This allows the attacker to authenticate as the victim on the target system. However, note that:
+
 - NTLM authentication cannot be relayed back to the originating machine.
-- NTLM relaying is viable only if SMB signing, HTTP signing, or LDAP signing is **not enforced** on the target systems.
+- NTLM relaying is viable only if SMB signing, or LDAP signing is **not enforced** on the target systems. (of course depending on what you want it may be enough if one machine on the network has one of these unenforced)
 
 !!! info
 	For more information, see: [The Hacker Recipes - NTLM Relay](https://www.thehacker.recipes/ad/movement/ntlm/relay)
 
 ### LDAP Relaying
 LDAP relaying involves forwarding NTLM authentication requests to an LDAP server to modify directory entries or escalate privileges. It requires:
+
 - The target LDAP server must have signing disabled.
 - The relayed account must have sufficient privileges to perform the intended operations.
 
@@ -40,9 +42,11 @@ Use the Relay Server alongside the **LLMNR** or **mDNS Server** to gather Net-NT
 
 ### 2. NTLM Relaying to ADCS HTTP Endpoints (ESC8)
 Relaying NTLM authentication to an ADCS server allows attackers to obtain a certificate that can be used to impersonate the relayed account. This is especially useful for gaining domain persistence or escalating privileges. Steps include:
+
 1. Identify an ADCS server using [OctoPwn's ldap client](../clients/ldap.html#certify). 
 2. Verify if the Web Enrollment feature is enabled.
-3. Use the Relay Server to forward NTLM authentication to the ADCS endpoint.
+3. Coerce authentication. TODO
+4. Use the Relay Server to forward NTLM authentication to the ADCS endpoint.
 
 ### 3. Abusing Non-Enforced LDAP Signing
 Relay NTLM authentication to an LDAP server to grant delegate access or perform other directory modifications. This only works when receiving authentications via HTTP, e.g. by coercing WebDAV.

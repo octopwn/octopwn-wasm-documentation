@@ -6,11 +6,13 @@ theme:
   name: material
   logo: images/OCTO_Character_Web_64px.svg
   font:
-    text: Quicksand
+    text: Roboto
+    code: Roboto Mono
   features:
     - navigation.tabs
     - content.code.copy
     - content.code.select
+
 extra_css:
   - stylesheets/extra.css
 use_directory_urls: false
@@ -44,7 +46,7 @@ nav:
     - 'Install': 'setup/install.md'
 
   - 'Clients': 
-      - 'Overview': './plugins/overview.md'
+      - 'Overview': './plugins/clients/overview.md'
       - 'DNS' : './plugins/clients/dns.md'
       - 'SMB' : './plugins/clients/smb.md'
       - 'LDAP' : './plugins/clients/ldap.md'

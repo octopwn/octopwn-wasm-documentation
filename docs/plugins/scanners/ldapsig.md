@@ -33,6 +33,10 @@ A list of targets can be specified in the following formats:
 - **Hostname**: Resolvable hostname.
 - **File**: Path to a file containing targets (must be in OctoPwn’s `/browserefs/volatile` directory). File lists need to be uploaded into OctoPwn and separated by newlines.
 - **Control word**: Use `all` to scan all stored targets.
+- **Single Group**: `g:<groupname>` (e.g., `g:test1`).
+- **Multiple Groups**: `g:<groupname1>,g:<groupname2>` (e.g., `g:test1,g:test2`).
+- **Port Group**: `p:<port>` (e.g., `p:445`).
+- **Port Group with Protocol**: `p:<port>/<protocol>` (e.g., `p:445/tcp`).
 
 ---
 
