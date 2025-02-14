@@ -89,6 +89,9 @@ These commands allow you to list potential targets available for kerberoasting a
 #### spns
 Lists all user objects who have `servicePrincipalName` set. This serves as enumeration for the Kerberoasting attack. If a user (other than `krbtgt`) has an SPN set it is possible to retrieve a TGS ticket and possibly decrypt the password of the user offline, if you are able to crack the password.  
 
+!!! info
+	To run a Kerberoasting attack on all users you can enter the Client ID of this LDAP plugin in the [kerberoast](kerberos.html#kerberoast) command. 
+
 #### asrep
 Lists all user objects who have the UAC_PASSW_NOTREQ flag set. This serves as enumeration for the AS-REP Roasting attack. If a user has this flag set it is possible to retrieve their AS-REP hashes and crack the and then crack the password of the user offline.
 
