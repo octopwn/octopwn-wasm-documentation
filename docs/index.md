@@ -10,8 +10,102 @@ Here you can find all information about all editions of Octopwn:
 
 If you need further help, please [write us here](https://octopwn.com/support) or use the support channel on our [Discord](https://discord.gg/7amw5mD37Y).  
     
-**Current Octopwn version:** v1.1  (6-November 2024)  
-**Currently in development:** New UI, Attacks, improved file uploader, bug fixes, documentation updates
+**Current Octopwn version:** v2.0  (5-February 2025)  
+**Currently in development:** More attacks, more scanners, bug fixes, documentation and UI updates, AI assistant
+
+
+## Release notes for v2.0:
+**Documentation Improvements**
+
+ - Comprehensive updates for better clarity and usability.
+
+**First attacks are implemented**
+
+ - New attack plugins include IPMI, Kerberoast, Timeroast, DPAPI, and more.
+
+**New Scanners Added**
+
+ - SMB Signing Check
+
+ - SMB Share Enumeration with Write-Test
+
+ - PMI Scanners
+
+ - NFS File Scanner
+
+**Target Enhancements**
+
+ - Port/Protocol Pairs: Targets now store port and protocol information.
+
+ - Flexible import: Load targets from Nmap, Nessus, Masscan, or plaintext files, including port details.
+
+ - Prefix Support: Add prefixes when loading targets from list files.
+
+ - Group Assignments: Assign targets to groups during import and creation.
+
+ - One-Click Remote Name Resolution: Simplify single-target creation with remote name resolution.
+
+**Scanner Target Specification**
+
+ - Add group and port-based target filtering for more precise scanning.
+
+**Reworked Product Core**
+
+  - Faster Session Reloads: Experience significantly reduced loading times.
+
+  - Improved Scan Parameters: Enhanced descriptions for better clarity.
+
+  - Overall Performance Boost: Enjoy a much faster and more responsive product.
+
+**Integrated Python Code Execution**
+
+  - Run Python scripts directly from a VSCode-like editor in your browser.
+
+  - Automate various aspects of Octopwn seamlessly.
+
+**Switch protocols directly within the scanners**
+
+  - Create client sessions using different protocols than the scanners themselves.
+
+**UI Improvements**
+
+- Improved and more consistent UI screens
+
+**Improved Creator Logic**
+
+  - Client/Target/Credential/Proxy Creators: Complete in-place configuration without the need to close and reopen them.
+
+**Proxy Improvements**
+
+  - Protocol Support: Python, .NET, and Golang proxies now support UDP.
+
+  - Authentication Proxy: Available in the Golang version.
+
+  - Tailscale Integration: Golang proxies can act as nodes on your Tailscale VPN.
+
+  - Name Resolution: All proxies support name resolution without predefined DNS assignments.
+
+**Neo4j Integration**
+
+  - Optional utility for Bloodhound database integration.
+
+**Session File Enhancements**
+
+  - JSON Serialization: Faster saving and loading times compared to TOML.
+
+  - Important: Older session files are no longer supported. If you have data in older formats, please use the previous version of the session viewer available on [GitHub].
+
+ - Scan History: Now stored in session files for easy access.
+
+**Enhanced User Profile**
+
+ - Displays up-to-date information on the current release.
+
+ - Enables direct proxy code downloads.
+
+**QR Code Login for live.octopwn.com**
+
+ - Seamlessly log in without entering credentials on the machine running Octopwn.
 
 ## Release notes for v1.1:
 
