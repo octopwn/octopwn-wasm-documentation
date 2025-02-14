@@ -8,17 +8,20 @@ OctoPwn will automatically enumerate vulnerable accounts and run the attack on a
 
 ## Attack Overview
 
-1. **Prerequisites**:
+**Prerequisites**:
+
    - Valid domain credentials are required to request TGS tickets for service accounts.
    - Access to the domain controller or a Kerberos service is necessary.
 
-2. **Attack Steps**:
+**Attack Steps**:
+
    - Identify user accounts with an SPN set (e.g., service accounts). OctoPwn will do this for you automatically. 
    - Request the TGS ticket for these accounts.
    - Retrieve the ticket's hash.
    - Perform offline cracking of the hash using tools like **Hashcat** or **John the Ripper** to recover the service account's password.
 
-3. **Potential Outcomes**:
+**Potential Outcomes**:
+
    - Access to sensitive applications or data tied to the service account.
    - Lateral movement within the domain using the compromised account.
    - Escalation of privileges if the service account has administrative permissions.
@@ -40,6 +43,7 @@ Enter the ID of the proxy to route the attack through. Proxies must be configure
 Specifies the target domain controller. The attack target is always the domain controller in standard windows domains.
 
 A target can be specified in the following formats:
+
 - **ID**: ID of the target domain controller from the Targets Window.
 
 ---
