@@ -41,21 +41,3 @@ Specifies the proxy ID to route traffic through.
 
 #### resultsfile
 Defines the file path for saving captured results.
-
-
-
-relay server -either together with llmnr, ... or smb coercion
-
-
-|                     |     |                                                 |         |     |                                                                                                                                                                                                                                                          |
-| ------------------- | --- | ----------------------------------------------- | ------- | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| adcstemplate        | str | ADCS template name                              | Unknown | No  | you get a certificate you can authenticate with, depending on who you are relaying<br>Values: User, Machine, DomainController, Unknown (if you don't know if user and machine, will try both, going to fail if machine you coerced is domain controller) |
-| connectproxy        | str | Proxy ID used when creating interactive clients |         | No  | different proxy for relay connection - sending (other one than listening on)                                                                                                                                                                             |
-| debug               | str | Enable debug mode                               | 0       | No  | debug prints                                                                                                                                                                                                                                             |
-| httpproxyserverport | str | HTTP Proxy server port                          | 8080    | Yes | if proxy is used on the network - port will be listend to on the serverproxy                                                                                                                                                                             |
-| httpserverport      | str | HTTP server port                                | 80      | Yes | listening for connections                                                                                                                                                                                                                                |
-| httpsserverport     | str | HTTPS server port                               | 443     | Yes | listening for connections                                                                                                                                                                                                                                |
-| httptargets         | str | List of HTTP targets to connect to              |         | No  | targets we want to relay authentication to                                                                                                                                                                                                               |
-| ldaptargets         | str | List of LDAP targets to connect to              |         | No  | targets we want to relay ldap auth to                                                                                                                                                                                                                    |
-| serverip            | str | IP address to listen on (for all servers)       | 0.0.0.0 | No  | which interface to listen on                                                                                                                                                                                                                             |
-| serverproxy         |     |                                                 |         |     | listening proxy id                                                                                                                                                                                                                                       |

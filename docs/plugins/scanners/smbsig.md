@@ -4,7 +4,6 @@ The **SMB Signature Scanner** in OctoPwn checks whether SMB signing is enabled a
 
 **SMB Relaying** is an attack that allows adversaries to intercept and relay SMB authentication requests to another target, effectively impersonating the victim. This can be used to gain unauthorized access to resources or escalate privileges within a network. Note that OctoPwn has built-in SMB Relaying capabilities with the [Relaying Server](../servers/relay.html).
 
-subset of smbproto - will only check if signing is enabled and enforced 
 ---
 
 ## Parameters
@@ -16,12 +15,16 @@ Specifies the targets to scan.
 
 A list of targets can be specified in the following formats:
 
-- **ID**: ID of the target server from the Targets Window.
+- **ID**: ID of the target server from the targets window.
 - **IP**: Single IP address (e.g., `192.168.1.1`).
 - **CIDR**: IP range in CIDR notation (e.g., `192.168.1.0/24`).
 - **Hostname**: Resolvable hostname.
 - **File**: Path to a file containing targets (must be in OctoPwn’s `/browserefs/volatile` directory). File lists need to be uploaded into OctoPwn and separated by newlines.
 - **Control word**: Use `all` to scan all stored targets.
+- **Single Group**: `g:<groupname>` (e.g., `g:test1`).
+- **Multiple Groups**: `g:<groupname1>,g:<groupname2>` (e.g., `g:test1,g:test2`).
+- **Port Group**: `p:<port>` (e.g., `p:445`).
+- **Port Group with Protocol**: `p:<port>/<protocol>` (e.g., `p:445/tcp`).
 
 ---
 
