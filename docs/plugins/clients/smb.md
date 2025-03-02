@@ -389,16 +389,12 @@ The dcsync output will be saved to the volatile browser storage in a text file a
 
 For the dcsync to work, the target in the current client needs to be the domain controller of the domain you want to sync. You need to be logged-in with credentials with the appropriate privileges as explained above.
 
-{==How do I sync from a different domain? I added dcsync privileges to a foreign domain object, logged in on the other DC with that user and get==}
-
-```
-ERROR_DS_DRA_BAD_DN - The distinguished name specified for this replication operation is invalid.
-```
-
+The dcsync will sync the current ntlm hash as well as all NTLM Hash History available on the domain controller as well as AES 256 and AES 128 Keys (These can be alternatively uses instead of the NTLM for authentication in windows and the usage of them might be less suspicious). 
 ##### Parameter 
 
-- **username** (optional): Specify the username of the user you want to dcsync. If you don't supply a username all users will be synced. 
-- **storesecrets**: {==what does this do?==}
+- **username** (optional): Specify the username of the user you want to dcsync. If you don't supply a username all users will be synced. The format can be just the username (e.g. `krbtgt`) or  `username@domain` (e.g. `krbtgt@sevenkingdoms.local`) (the additional domain name here might be necessary to sync specific users in special circumstances, such as the same username existing twice in merged domains)
+- **domain**: The domain in which the user you to dcsync from resides. Make sure you are connected to the domain controller of the domain you want to dcsync from. 
+- **storesecrets**: Stores the synced usernames and hashes into the credentials window in the side menu for easy access. Not recommended when syncing a whole domain. Possible values are: `True` and `False`.
 
 #### lsassdump
 

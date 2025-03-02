@@ -11,7 +11,7 @@ Sends a single DNS query to the server, prints result to the console.
 ##### Parameters
 - **name**: The DNS name you wish to resolve.
 - **qtype**: The query type. Supported query types are A/AAAA/PTR.
-- **search**: search for a string {==what does this search?==}
+- **search**: Allows you to search for a string
 
 # Commands
 ## TARGETS
