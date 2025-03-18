@@ -14,8 +14,8 @@ OctoPwn consists of three components.
 
 	??? info "For Mac Users"
 		Safari is currently not supported and will result in connection errors. 
-	
-		 You might need enable local network access for the browser you are using. Go to `System Settings > Privacy & Security > Local Network` and enable your browser here. You might need local administrative privileges to enable this.
+		
+		You might need enable local network access for the browser you are using. Go to `System Settings > Privacy & Security > Local Network` and enable your browser here. You might need local administrative privileges to enable this.
 
 2. Download and execute the [wsnet](https://github.com/octopwn/wsnet) client. This will by default open the local port 8700 for communication via websockets with your host machine. If you wish, you can also host the wsnet client on a different device. 
 
@@ -51,7 +51,10 @@ OctoPwn consists of three components.
 	    https://github.com/octopwn/wsnet-dotnet/releases/latest
 	    ```
 
+	??? info "For Mac Users"
+		In order to run `pip3 install wsnet` you need to install XCode Developer Tools. macOS will prompt you to install them automatically when running `pip3 install wsnet`. 
 
+		You will have to add python user binary (`Users/<user>/Library/Python/3.9/bin`) files to your current path in the `~/.zshrc` file and start a new terminal session. 
 
 3. Go back to your browser and enter the address of your local wsnet client in the Networking section `ws://127.0.0.1:8700/` and _Launch OctoPwn_.  
 
@@ -69,11 +72,11 @@ OctoPwn consists of three components.
 
 You can find comprehensive information on core functionalities and usage here:
 
-* [Overview of clients](plugins/clients/overview.html): Clients allow you to interact on a protocol-level with various single services such SMB, LDAP and Kerberos. 
-* [Overview of scanners](plugins/scanners/index.html): Scanners allow you to scan multiple hosts based on previously defined target groups. You can for example scan for admin priviliges with a specified user, scan for sensitive files across multiple hosts. 
-* [Overview of servers](plugins/scanners/overview.html): Servers allow you to execute attacks that require a server component, such as NTLM Relaying and LLMNR/NBTNS Poisoning. This might require you to open a port on the firewall to receive the connections
-* [Overview of utilities](utils/index.html): Utilities allow you to run additional functionality that partly run only in the browser, such as pypykatz for lsass analysis, access a local IDE or run roadtools for cloud pentesting. 
-* [Overview of attacks](utils/attacks.html): Attacks allows an easy one-click experience for common attacks, such as Kerberoasting, DCSync, SAM Dump, ...
+* [Overview of clients](../plugins/clients/overview.html): Clients allow you to interact on a protocol-level with various single services such SMB, LDAP and Kerberos. 
+* [Overview of scanners](../plugins/scanners/index.html): Scanners allow you to scan multiple hosts based on previously defined target groups. You can for example scan for admin priviliges with a specified user, scan for sensitive files across multiple hosts. 
+* [Overview of servers](../plugins/servers/overview.html): Servers allow you to execute attacks that require a server component, such as NTLM Relaying and LLMNR/NBTNS Poisoning. This might require you to open a port on the firewall to receive the connections
+* [Overview of utilities](../plugins/utils/index.html): Utilities allow you to run additional functionality that partly run only in the browser, such as pypykatz for lsass analysis, access a local IDE or run roadtools for cloud pentesting. 
+* [Overview of attacks](../plugins/attacks/overview.html): Attacks allows an easy one-click experience for common attacks, such as Kerberoasting, DCSync, SAM Dump, ...
 * Overview of proxies and proxy chains are coming soon: For now, if you want to tunnel your traffic over a proxy, e.g. when using a C2 or want to tunnel your connection over RDP (e.g. with https://github.com/airbus-seclab/soxy), simply add the proxy with ip address and port and choose your proxy id (shown in the Proxies section in the right popout menu) when connecting a client or a scanner. 
 
 ---

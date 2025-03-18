@@ -42,7 +42,6 @@ nav:
   - 'Getting started':
     - 'Getting Started' : 'user-guide/gettingstarted.md'
     - 'Modes of Operation': 'user-guide/modesofoperation.md'
-    - 'Core Functionalities': 'user-guide/corefunctionalities.md'
     - 'Install': 'setup/install.md'
 
   - 'Clients': 
