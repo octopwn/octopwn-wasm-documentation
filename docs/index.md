@@ -10,10 +10,53 @@ Here you can find all information about all editions of Octopwn:
 
 If you need further help, please [write us here](https://octopwn.com/support) or use the support channel on our [Discord](https://discord.gg/7amw5mD37Y).  
     
-**Current Octopwn version:** v2.0  (5-February 2025)  
-**Currently in development:** More attacks, more scanners, bug fixes, documentation and UI updates, AI assistant
-
-
+**Current Octopwn version:** v2.1  (6-April 2025)  
+**Current closed beta:** Octopwn Binary v0.1 (6-April 2025)  
+**Currently in development:** Improved automations, tutorials, more attacks and scanners
+  
+## Release notes for v2.1:
+  
+**New scanners:**  
+- SSHLOGIN: Checks if user can login  
+- MSSQLLOGIN: Checks if user can login  
+- FTPLOGIN: Checks if user can login  
+- MSSQLFINGER: Gets basic NTLM information  
+- MSSQLPIPE: It's actually an SMB scanner that checks if servers expose MSSQL pipes  
+- MSSQLQUERY: Performs MSSQL query on multiple targets  
+- HTTPHEADER: Fetches HTTP(S) headers from targets  
+  
+**New clients:**  
+- MSSQL  
+- FTP  
+  
+**Added new snaffler utility:**  
+- besides the core snaffler feature this module can use LLMs via ollama to automatically parse and create new credentials found during a snaffling run  
+  
+**Added Octopwn core callbacks:**
+- target creation callback  
+- credential creation callback  
+- port creation callbacks  
+- session creation callbacks  
+These callbacks can be used to automate octopwn via already existing or user-defined modules.
+  
+**Added autoscan utility:**  
+- automatically use built-in (or custom) scanner modules against newlty created targets and/or newly discovered ports which match the pre-set triggerport of any scanner.  
+  
+**Target ports are now merged when an existing target is added with ports which have not seen before**  
+  
+**Improved remote control modules**
+  
+**Changing session file password now automatically performs a save immediately to actualize the password change on disk.**  
+  
+**Improved plugin system:**  
+- The plugin system received some improvements, and we're providing "header" files for octopwn which can be used in vscode/visual studio to help plugin developement.  
+  
+**Bug fixes:**  
+- UI bug fixed: the starter modal's start button could be pressed mutiple times which caused multiple octopwn instances to start in paralel. Now it's been fixed.  
+  
+**Pyodide upgrade:**  
+- We moved from Pyodide version 0.24 to 0.27. This change means considerable speed improrovements and fixes many stability issues.  
+  
 ## Release notes for v2.0:
 **Documentation Improvements**
 
