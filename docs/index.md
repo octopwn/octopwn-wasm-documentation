@@ -20,65 +20,66 @@ If you need further help, please [write us here](https://octopwn.com/support) or
 **Currently in development:** Improved automations, tutorials, more attacks and scanners
   
 ## Release notes for v2.14:
-**New Octopwn Enterprise is in open beta:**
-- Runs as a binary
-- Fully programmable pentesting (Autopwn) available. See more details here: 
-- Added full Hashcat integration for automatic credential pwning
-- Added LLM integration (local and cloud) for automatic credential parsing for Autopwn
-- Much faster operation due to access to all system resources
-- Builds an all major platforms (Linux, MacOS and Windows)  
+**New Octopwn Enterprise is in open beta:**  
+- Runs as a binary  
+- Fully programmable pentesting (Autopwn) available. See more details here:  
+- Added full Hashcat integration for automatic credential pwning  
+- Added LLM integration (local and cloud) for automatic credential parsing for Autopwn  
+- Much faster operation due to access to all system resources  
+- Builds are available for all major platforms (Linux, MacOS and Windows)  
   
 **Octopwn improvements:**  
-Automated scanning:
-- All scanners can be started easily with the new Automated Scanner.
+**Automated scanning:**  
+- All scanners can be started easily with the new Automated Scanner.  
 
-New scanners are added:  
-- added ftp anonymous scanner
-- added smb sppoler scanner
-- added smb webdav scanner
+**New scanners are added:**  
+- added ftp anonymous scanner  
+- added smb sppoler scanner   
+- added smb webdav scanner  
 
-New attacks are added: 
-- added ESC1/ESC4 attack
-- added shadowcredentials attack
-- added RBCD attack
-- added constraineddelegation attack
+**New attacks are added:**  
+- added ESC1/ESC4 attack  
+- added shadowcredentials attack  
+- added RBCD attack  
+- added constraineddelegation attack  
 
-Graph view utility added:  
-- Added 'Graph' view to represent the internal state of the octopwn application.
-- Domain attacks graph representation created, this allows exploiting certain edge types from the UI.
+**Graph view utility added:**  
+- Added 'Graph' view to represent the internal state of the octopwn application.  
+- Domain attacks graph representation created, this allows exploiting certain edge types from the UI.  
 
-LLM integration (in Beta):  
-- added LLM ask to all sessions, so you can directly ask the LLM eg. to fetch relevant parts of the documentaion or explain certain features and commands
+**LLM integration (in Beta):**  
+- added LLM ask to all sessions, so you can directly ask the LLM eg. to fetch relevant parts of the documentation or explain certain features and commands  
 - added LLM run to all sessions, so you can prompt the LLM to perform any activity available in Octopwn
 
-Improved reporting:  
-- Reporting can now add scanner results to the report
+**Improved reporting:**  
+- Reporting can now add scanner results to the report  
 
-Scanner improvements:  
-- improved (unified) scanner outputs
-- scanners store results not in separate files but in their result parameter
-- mssql pipe scanner now verifies if the pipe is accessible to the user
+**Scanner improvements:**  
+- improved (unified) scanner outputs  
+- scanners store results not in separate files but in their result parameter  
+- mssql pipe scanner now verifies if the pipe is accessible to the user  
 
-Improved plugin system:  
-- Easier to add your own plugins to Octopwn and use them in Autopwn
+**Improved plugin system:**   
+- Easier to add your own plugins to Octopwn and use them in Autopwn  
 
-Proxy improvements:
-- the GOlang proxy binary, now supports interfacing with processes, filesystem operations and has a tailscale server and client version as well
-- .net and python proxies processes/filesystem are enhanced
-- .net proxy now has RDP/SMB pipe agent capabilities as well as websocket client version (connect back)
+**Proxy improvements:**  
+- the GOlang proxy binary, now supports interfacing with processes, filesystem operations and has a tailscale server and client version as well  
+- .net and python proxies processes/filesystem capabilities are enhanced  
+- .net proxy now has RDP/SMB pipe agent capabilities as well as websocket client version (connect back)  
 
-Misc:  
-- normalized session parameter handling (now all sessions regardless of type can store arbitrary metadata)
-- more LDAP commands (like certify, trusts etc.) now automatically add targets when successful
-- more SMB commands now automatically add targets when successful3
-- added 'source' attributes to each object to allow visually (and programmatically) track how each target/proxy/credential/session/scanner was created and from which other session
+**Misc:**  
+- normalized session parameter handling (now all sessions regardless of type can store arbitrary metadata)   
+- more LDAP commands (like certify, trusts etc.) now automatically add targets when successful  
+- more SMB commands now automatically add targets when successful  
+- added 'source' attributes to each object to allow visually (and programmatically) track how each target/proxy/credential/session/scanner was created and from which other session  
+- multiple bug fixes  
 
-Improved UI:  
-- Enhanced UI functionality and the startup screen
-- Refactored community license handling in the OctoPwn application
-- Enabled all clients to be created driectly from the ui, including mssql over named pipes
-- SMB pipe scanner now allows one-click client creation on the results
-- All tools are ordered alphabetically now
+**Improved UI:**  
+- Enhanced UI functionality and the startup screen  
+- Refactored community license handling in the OctoPwn application  
+- Enabled all clients to be created driectly from the ui, including mssql over named pipes  
+- SMB pipe scanner now allows one-click client creation on the results  
+- All tools are ordered alphabetically now  
 
 ## Release notes for v2.1:
   
