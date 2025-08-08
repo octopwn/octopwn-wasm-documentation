@@ -3,7 +3,7 @@ Autopwn is an automated tool designed to achieve quick results on any network an
 
 ## How does Autopwn work?
 
-![](docs/images/octopwn_autopwn - print.drawio.png)
+![Autopwn logic flowchart](/images/octopwn_autopwn_print.drawio.png "Autopwn flowchart")
 
 * You can choose the LLM you want to use, and it can run locally or in the cloud as well
 

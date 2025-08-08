@@ -115,9 +115,9 @@ nav:
       - 'dpapi': './plugins/attacks/dpapi.md'
       - 'smbregdump': './plugins/attacks/smbregdump.md'
       - 'smbregdump2': './plugins/attacks/smbregdump2.md'
-
       - 'timeroast': './plugins/attacks/timeroast.md'
-
+  - 'Automations':
+      - 'autopwn': './plugins/automations/autopwn.md'
 
   - 'Misc':
     - 'Security considerations': 'security.md'
