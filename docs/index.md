@@ -15,10 +15,99 @@ Here you can find all information about all editions of Octopwn:
 
 If you need further help, please [write us here](https://octopwn.com/support) or use the support channel on our [Discord](https://discord.gg/7amw5mD37Y).  
     
-**Current Octopwn version:** v2.14 (3-August 2025)  
-**Current open beta:** Octopwn Enterprise with Autopwn and LLM integrations (3-August 2025)
-**Currently in development:** Improved automations, tutorials, more attacks and scanners
+**Current Octopwn version:** v3.0 (20-November 2025)  
+**Current open beta:** none
   
+## Release notes for v3.0:  
+**Scan Engine & Plugin Improvements**  
+- Added new scanners: NTLM Reflection scanner, NTLMv1 scanner, Local Resolver, improved Relay engine, and improved Spoofer.  
+- Enhanced MSSQLPipeScanner and MSSQLPipeExecutor with improved credential handling, target configuration, and login state reporting.  
+- Improved error handling across all scanner modules, especially for MSSQL  
+- Made minidump/registry/NTDS parsing much easier and taking up way less memory  
+- Credential editor view added  
+  
+- Made krbetypes optional in scannerbase for broader scanner compatibility.  
+- Introduced batch credential loading via do_streamcreds to efficiently process large credential sets.  
+- Improved path validation, normalization, and sanitization in multiple scanning and file-handling functions. This step made sure all files end up in the work directory and not in some random place on the disk  
+- Updated logging behavior to hide low-value commands and reduce noise.  
+  
+**New servers: (serving work directory files)**  
+- HTTP file server  
+- Webdav file server  
+  
+**Relay attack module:**  
+- Relay to SMB  
+- Relay to LDAP  
+- NTLM reflection relay to SMB (automatically connects back to the client's IP address to start the attack)  
+- Improved coercer attack, added option to stop at first successful step. This means after the DNS query via LDAP has been created for the reflection attack, coercer and NTLM reflection relay can create a shell-cascade of successful attacks.  
+  
+**Scan Result Viewer & History**  
+- Added unified scan result viewer for consistent display across all scanner modules.  
+- Added a new session history tab showing past scans and results over time.  
+- Improved handling of scan result metadata from SQL storage.  
+- Improved stability and rendering of large result sets.  
+  
+**Credential & Secret Management**  
+- Introduced a full Credential Editor feature for inspecting and modifying stored credentials.  
+- Added support for credential status reporting and new credential-related messages.  
+- Implemented new Secrets Editor feature with worker-backed processing.  
+- Added password cracking reporting, including parsing and structured display of cracked entries.  
+- Integrated NTDS, minidump (LSASS), and registry parsing tools directly into the UI sidebar.  
+  
+**SMB, LDAP, and File Browsing**  
+- Added SMB file previewing using Monaco editor.  
+- Added right-click context menu for file viewing.  
+- Added warning and handling for large file previews.  
+- Introduced worker-based LDAP object browsing for better performance on large directories.  
+- Improved file download/upload handling and backend integration.  
+  
+**AutoPwn & Attack Workflow Improvements**  
+- Added new BloodHound attack options.  
+- Added ability to create non-admin sessions from AutoPwn (default is off).  
+- Improved scanner information display to include credential state and enhanced metadata.  
+  
+**Core Backend & Architecture**  
+- Migrated entire data storage layer from in-memory JSON structures to a fully SQL-backed system.  
+- Significantly improved scalability, persistence, stability, and performance for large scan datasets.  
+- Refactored core modules to support SQL-powered result retrieval,history tracking, and metadata storage.  
+- Added new storage methods for counting, streaming, filtering, and searching scan results.  
+- Unified JSON serialization and history entry structure with support for result counts and richer metadata.  
+  
+**Web Server & Worker Architecture**  
+- Improved request handling, error recovery, and response streaming across the framework.  
+  
+***Enterprise version:***  
+- Completely refactored internal web server to an asynchronous architecture insted of multiprocessing.  
+- Moved the entire OctoPwn core engine into a dedicated WebWorker for improved responsiveness and isolation.  
+  
+***PRO version:***  
+- Moved the entire OctoPwn core engine into a dedicated WebWorker for improved responsiveness and isolation.  
+  
+**Terminal, Sessions, and Performance**  
+- Refactored terminal and console engine to drastically reduce memory usage  
+- Improved session restore logic with more reliable state handling and lower memory footprint.  
+- Better command lifecycle handling and reduced overhead during interactive sessions.  
+  
+***Enterprise version:***  
+- Added new terminal utility, so you don't need to rely on SSH.  
+  
+**Frontend (Webpack) & UI Enhancements**  
+- Multiple Pyodide wheel updates for compatibility, stability, and performance.  
+- Migrated PRO version from browserfs to Pyodide FS for faster, more reliable storage.  
+- Refactored communication manager for more efficient message flow.  
+- Introduced worker-based processing for LDAP and secret management paths.  
+- Refactored initialization flow for cleaner startup and more stable communication.  
+- Removed redundant logging to improve front-end performance.  
+- Improved window layout, tab styling, and scanner action button UI.  
+- Added global project name dialog.  
+- Added option to hide new session windows on lunch.  
+  
+**Quality-of-Life Fixes & Stability**  
+- Dozens of relay engine fixes and reliability improvements.  
+- Cleaned up error handling, logging clarity, and crash resilience across both core and UI.  
+- Improved message handling in the OctoPwn interface.  
+- Fixed memory issues in terminal and session subsystems.  
+    
 ## Release notes for v2.14:
 **New Octopwn Enterprise is in open beta:**  
 - Runs as a binary  
