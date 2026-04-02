@@ -15,8 +15,80 @@ Here you can find all information about all editions of Octopwn:
 
 If you need further help, please [write us here](https://octopwn.com/support) or use the support channel on our [Discord](https://discord.gg/7amw5mD37Y).  
     
-**Current Octopwn version:** v3.0 (20-November 2025)  
+**Current Octopwn version:** v4.0 (2-April 2026)  
 **Current open beta:** none
+
+# Release notes for v4.0  
+**Major UI overhaul**  
+- New login flow, all windows are improved, many usability improvements  
+  
+**Reporting improvements**  
+- Added feature to generate pseudo-screenshots for each client command (for documentation purposes), see the "History" tab  
+- All non-client modules now contain a local documentation tab  
+- New Vulnerabilty reporting (beta) (only for Enteprise) that creates vulnerability report entries from the scan results that can be used for client reporting  
+  
+**New feature: Webcrack**  
+- If the website is loaded over HTTPS and your machine supports WebGPU, then webcrack will automatically activate and auto-cracks NT/DCC/DCC2/Kerberos type hashes using your GPU  
+  
+**New feature: Secrets editor**  
+- Browse Dcsync and NTDS.dit extracts  
+- Export NT hashes in hashcat format  
+- Import hashcat pot file  
+- Generate various password cracking statistics for easy reporting  
+  
+**New scanners added**  
+- Nuclei (enterprise only)  
+- MSSQL Sensitive data scanner  
+- Event6Secrets - extracting secrets from windows event logs  
+  
+**New automation module (Beta)** (Enteprise only)  
+- New, visual automation editor to easily create and customize your automation workflows  
+  
+**MSSQL relay server added**  
+- Now you can perform NTLM relay attacks against MSSQL servers  
+  
+**LDAP Client Improvements**  
+- LDAP client got new tabs like object viewer, ldap query editor, ldap vulnerability analysis etc  
+- LDAP client now allows to edit users and machine objects directly via the UI  
+- LDAP client windows got an LDAP browser tab  
+- LDAP DNS enumeration/query/addition/removal features implemented  
+  
+**New LDAP Vulnerability Analysis framework**  
+- Check for configuration issues and use it for reporting  
+  
+**MSSQL Client improvements**  
+- Mssql client added query editor  
+- Mssql client added sql browser  
+  
+**SMB Client Improvements**  
+- SMB client added dedicated file browser and file viewer  
+- SMB added new command execution features via MMC2.0 task scheduler, task scheduler(runas), shellwindows, shellbrowserwindows, wmicmd  
+- SMB added shadow copy operations via WMI and DCOM  
+- SMB WMI operations via DCOM added  
+- SMB added vhdxsecretsdump for one-shot secrets extraction from vhd/vhdx/vmdk files without downloading them  
+- SMB added snalffle_directory to perform secrets extraction from files on a given directory  
+- SMB added/fixed list_snapshots  
+  
+**New client: DCOM WMI**  
+- Adds a DCOM WMI client: query, remote command execution (with output), shadow copy list/create/delete, process/service/system enumeration, registry read/write/delete, RDP enable/disable, and related helpers.  
+  
+**Session file management:**  
+- Session file is database-backed, sqlite is set as default, mongodb can be used optionally  
+- Session database can be searched/filtered  
+  
+**RDP Screenshot improvement**  
+- RDP screenshots now produce screenshot files containing the clientid and the hostname of the target  
+  
+**Scanner improvements:**  
+- SMBRegsession scanner username resolver now utilizes existing LDAP sessions to fetch the username  
+  
+**Bugfixes:**  
+- LDAPSigcheck scanner fixed  
+- SSHInfo scanner results serialization fixed  
+- mssqlqueryresults serialization fixed  
+- fixes on MDNS/LLMNR/NBTNS poisoners  
+- shadowcreds attack PKINIT crypto library issue fixed  
+- Various backend improvements and optimizations for stability and better performance  
   
 ## Release notes for v3.0:  
 **Scan Engine & Plugin Improvements**  
