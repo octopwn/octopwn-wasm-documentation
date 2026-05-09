@@ -1,6 +1,13 @@
 # NFS3 File Scanner
 
-The **NFS3 File Scanner** in OctoPwn performs file enumeration over NFSv3 shares. It iterates through folders up to a specified depth, collecting file and folder information to identify potential credentials or other sensitive data. 
+The **NFS3 File Scanner** in OctoPwn performs file enumeration over NFSv3 shares. It iterates through folders up to a specified depth, collecting file and folder information to identify potential credentials or other sensitive data.
+
+!!! tip "Authentication"
+    The `authtype` field below defaults to `NTLM` purely for framework symmetry — NFSv3
+    does not actually use NTLM or Kerberos. The real authentication choices and their
+    operational caveats (NULL vs. system, low-port restriction, why a NULL share is the
+    rule rather than the exception) are documented in the
+    [NFS3 client authentication](../clients/nfs3.md#authentication) section.
 
 ---
 
@@ -50,7 +57,10 @@ A list of targets can be specified in the following formats:
 ### Advanced Parameters
 
 #### authtype
-Specifies the authentication protocol.
+Specifies the authentication protocol. Defaults to `NTLM` for framework symmetry — the
+actual NFSv3 authentication mechanism (`AUTH_NULL` vs. `AUTH_SYS`) is determined by the
+credential type, not by this field. See [NFS3 client authentication](../clients/nfs3.md#authentication)
+for the full breakdown.
 
 Available protocols:
 - `NTLM`

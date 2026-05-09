@@ -1,557 +1,981 @@
-# LDAP Client plugin
-This section describes the features and functionalities of the LDAP client plugin
+# LDAP Client
 
-## Features
-- LDAP browser
-- LDAP operations
-- Full Active Directory Dump
-- Custom BloodHound Ingestor
-- Operations on Users such as changing passwords, adding SPNs, adding users to a group 
-- Adding machine accounts
-- Viewing Group Policies
-- Extracting LAPS Passwords
-- Viewing group memberships
-- Enumerating trusts
-- Altering security descriptors and AD attributes(e.g. such as adding dcsync privileges, changing owner, adding to `allowedtoactonbehalfofotheridentity` attribute for Resource-Based Constrained Delegation abuse)
-- Listing Group-Managed Service Accounts
-- Enumerate Certificates and checking for vulnerable certificate templates
-- Enumeration AD objects that have delegation privileges
- 
-### Getting started
-To use the LDAP Client plugin, select the credentials and the target and then create a client of type SMB in the Main GUI. This will open the SMB2 client window with the selected credentials. For most operations you will need to run the `login` command to get started.
+The **LDAP Client** is OctoPwn's general-purpose interface for LDAP — primarily Active Directory, but with limited support for non-Microsoft LDAP servers as well. It wraps the [`msldap`](https://github.com/skelsec/msldap) library and exposes its full surface as both a **GUI session window** (with tree browser, object viewer, raw query builder, and an Enterprise-only vulnerability scanner) and a very large **CLI command set** covering enumeration, modification, AD CS / Certify-style certificate abuse, BloodHound dump, DCSync ACL writes, delegation analysis, AD-integrated DNS manipulation, dMSA / Bad Successor checks, GPO hunting, LAPS retrieval, password-policy dumping, and more.
 
-For more information on supported credentials, see the [credentials page](../../user-guide/credentials.html). Please note, that not all authentication methods support all functions.
+This is one of the largest clients in OctoPwn — over 80 callable commands. The page is organised so the [Authentication](#authentication) and [GUI](#gui-experience) sections come first, then every command grouped by its `help` category, then a short [Additional commands](#additional-commands) section for utilities that are callable but not listed in `help`.
 
-After sucsessfully creating an LDAP client, the LDAP browser will automatically list the host in the File Browser Window
-The ldap browser supports basic ldap listing operations, similar to ADExplorer.
+---
 
-### Supported Authentication Types
-| Authentication Protocol | Secret Type | Description | Example |
-| ----- | ----- | ------| ----- |
-| NTLM | Password | Plaintext Password | MyPassw0rd | 
-| NTLM | NT | NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
-| NTLM | RC4 | RC4 NT Hash - same as NT | 8846F7EAEE8FB117AD06BDD830B7586C |
-| NTLM | AES | AES Key (contains a salt such as TEST.LOCALusername) - can be used in stead of the NT Hash | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
-| NTLM | NONE | Null authentication |  |
-| Kerberos | NT | NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
-| Kerberos | RC4 | RC4 NT Hash | 8846F7EAEE8FB117AD06BDD830B7586C |
-| Kerberos | AES | AES Key (contains a salt such as TEST.LOCALusername) - can be used instead of the NT Hash | d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 |
-| Kerberos | P12/PFX | Certificate - upload the certificate to volatile storage and then enter certfile path relative from `/browserefs/volatile`. If the certfile has a password, enter it as a secret | Administrator.pfx |
-| Kerberos | CCACHE | Kerberos credentials in binary CCACHE file format  | Administrator.ccache |
-| Kerberos | KEYTAB | Kerberos credentials in binary KEYTAB file format | Administrator.keytab |
-| Kerberos | KIRBI | Kerberos credentials in binary KIRBI file format | Administrator.kirbi |
-| Kerberos | KIRBI | Kerberos credentials in base64 KIRBI file format | doIF9DCCBfCg ...(snip)... ZXVzLmdob3N0cGFjay5sb2NhbA== |
-| Kerberos | NONE | Null authentication |  |
-| SSL | P12/PFX, PEM |  | |
-| SIMPLE | Password |  | |
-| SICILY | Password, NT Hash, AES |  | |
+## Transport
 
+There are two transport variants of the same underlying client:
 
-**NTLM (NT LAN Manager)**: A challenge-response authentication protocol used to authenticate a client to a network server on a Windows domain. It's commonly used for SMB and LDAP in environments where Kerberos might not be feasible.
+| Module name | Transport       | Default port |
+| ----------- | --------------- | ------------ |
+| `LDAP`      | TCP             | `389`        |
+| `LDAPS`     | TLS-from-start  | `636`        |
 
-**Kerberos**: A network authentication protocol designed to provide strong authentication for client/server applications by using secret-key cryptography. It's highly recommended for environments that require robust security, especially in Active Directory setups.
+Functionally the two are **identical** — every command on this page works on both. The difference is at session-creation time. `LDAPS` wraps the entire connection in TLS from the very first byte. `LDAP` is plaintext by default — but see the [`SSL` authentication type](#ssl-client-certificate-via-tls-or-starttls) below for the StartTLS path that upgrades a plain `LDAP` session to TLS mid-bind.
 
-**SSL (Secure Sockets Layer)**: Provides encryption for data transfers, creating a secure channel over potentially insecure networks. Primarily used in LDAP configurations when data security and privacy are of paramount importance.
+There is **no** Global Catalog (`GC` / `GC_SSL`) variant exposed here yet — use the `query` command's `basedn` argument together with `LDAP` / `LDAPS` for cross-domain searches in the same forest.
 
-**SIMPLE**: The most basic form of authentication that transmits credentials in plain text. It is generally not recommended for secure environments unless additional security measures, like encryption, are already in place.
+---
 
-**SICILY (Security Integrated Channel over LDAP Integrated Cryptographic Login)**: Microsoft's proprietary authentication protocol that supports multiple authentication methods including NTLM and sometimes Kerberos. It provides a more integrated authentication approach, particularly useful in Microsoft-centric environments.
+## Authentication
 
+LDAP authentication is unusually rich. OctoPwn exposes four `atype` choices, each backed by its own family of secret types and each with its own quirks. Picking the wrong one is the most common reason a session fails to bind.
+
+### `NTLM` — domain accounts via NTLM SSP
+
+Standard NTLM bind via the LDAP `SASL/GSS-SPNEGO` mechanism (with the optional `encrypt=true` flag enabling NTLM signing/sealing — note that NTLM signing is incompatible with `LDAPS` and is automatically skipped there). Use this for any Windows / Active Directory account when you do not specifically need or want Kerberos.
+
+| Secret type     | Description                                                  |
+| --------------- | ------------------------------------------------------------ |
+| `password`      | Cleartext password.                                          |
+| `pwhex`         | Hex-encoded UTF-16LE password.                               |
+| `nt` / `rc4`    | NT hash (pass-the-hash).                                     |
+| `agentproxy`    | Remote NTLM signer over the wsnet agent proxy.               |
+| `sspiproxy`     | OS SSPI session via the wsnet agent proxy (Windows agent).   |
+
+### `KERBEROS` — domain accounts via Kerberos / SASL GSSAPI
+
+Standard Kerberos bind via SASL GSSAPI. Requires reachability to a KDC (set on the credential / target) and a service principal of the form `ldap/<dc-hostname>@<REALM>`.
+
+| Secret type     | Description                                                  | Example                              |
+| --------------- | ------------------------------------------------------------ | ------------------------------------ |
+| `password`      | Cleartext password.                                          | `user:Pa55w0rd!`                     |
+| `pwhex`         | Hex-encoded UTF-16LE password.                               | `user:70617373…`                     |
+| `nt` / `rc4`    | NT/RC4 hash.                                                 | `user:aad3b…`                        |
+| `aes128`        | AES128 long-term key.                                        | `user:<32-hex>`                      |
+| `aes256`        | AES256 long-term key.                                        | `user:<64-hex>`                      |
+| `keytab`        | Keytab file in OctoPwn volatile storage.                     | `/browserfs/volatile/svc.keytab`     |
+| `keytabb64`     | Base64-encoded keytab inline.                                | `user:<b64>`                         |
+| `ccache`        | MIT ccache file in OctoPwn volatile storage.                 | `/browserfs/volatile/krb5cc.ccache`  |
+| `ccacheb64`     | Base64-encoded ccache inline.                                | `user:<b64>`                         |
+| `kirbi`         | `.kirbi` ticket file (Rubeus-style).                         | `/browserfs/volatile/admin.kirbi`    |
+| `kirbib64`      | Base64-encoded `.kirbi` inline.                              | `user:<b64>`                         |
+| `pfxb64`        | Base64-encoded PFX (PKINIT certificate auth via Kerberos).   | `user:<b64>`                         |
+| `agentproxy`    | Remote KDC over the wsnet agent proxy.                       | n/a                                  |
+| `sspiproxy`     | OS SSPI session via wsnet agent proxy (Windows agent).       | n/a                                  |
+
+### `SIMPLE` — non-Microsoft LDAP
+
+LDAP **simple bind** as defined in RFC 4513 — the username (typically the full DN, e.g. `cn=admin,dc=example,dc=org`) and the password are sent verbatim inside the BindRequest. This is the only authentication mode supported by most non-Microsoft LDAP servers (OpenLDAP, 389 DS, ApacheDS, …) and does **not** work against Active Directory unless the DC has been explicitly configured to allow it (it normally does, but the username has to be the full DN, not `DOMAIN\user`).
+
+| Secret type | Description                                |
+| ----------- | ------------------------------------------ |
+| `password`  | Cleartext password sent verbatim in the bind. |
+| `none`      | Anonymous bind (no password).              |
+
+!!! warning "Simple bind is cleartext"
+    `SIMPLE` over the `LDAP` (389) transport sends the password in the clear. Pair it with `LDAPS` (636) — or with `SSL` over `LDAP` (StartTLS) — whenever you do not own the wire.
+
+### `SSL` — client certificate via TLS or StartTLS
+
+Authentication is performed by the TLS handshake itself (the bind's username/password fields are empty). The only secret type is `pfxb64` — a base64-encoded PFX bundle containing the client certificate plus its private key.
+
+The behaviour depends on the transport:
+
+| Transport               | What happens                                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `LDAPS` (port 636)      | The client certificate is presented during the **initial** TLS handshake. No SASL bind is sent — once the handshake succeeds, the user is bound. |
+| `LDAP` (port 389)       | The client sends the **StartTLS extended operation** (`1.3.6.1.4.1.1466.20037`), wraps the existing TCP connection in TLS, then performs a **SASL EXTERNAL** bind. The server reads the certificate from the TLS context to identify the user. |
+
+So `SSL` over `LDAP` is the StartTLS path; `SSL` over `LDAPS` is the implicit-TLS / "LDAPS-with-client-cert" path. Both end up with a TLS-protected, certificate-authenticated session.
+
+| Secret type | Description                                                       |
+| ----------- | ----------------------------------------------------------------- |
+| `pfxb64`    | Base64-encoded PFX (`.pfx` / `.p12`) bundle with cert + private key. |
+
+!!! tip "Picking the right `atype` at a glance"
+    | The username looks like…                                             | Pick this `atype`     |
+    | -------------------------------------------------------------------- | --------------------- |
+    | `CONTOSO\jdoe`, `jdoe@contoso.local` — AD account                    | `NTLM` or `KERBEROS`  |
+    | `cn=admin,dc=example,dc=org` — non-MS LDAP                            | `SIMPLE`              |
+    | None — you have a `.pfx` bundle (e.g. from `shadowcred` / `certify`) | `SSL`                 |
+    | None — anonymous bind for `ldapinfo` / RootDSE recon                 | `SIMPLE` + `none`     |
+
+---
+
+## GUI experience
+
+The LDAP session window opens on the **Commands** tab by default. The header carries seven (eight on Enterprise) tabs:
+
+- **Commands** — clickable buttons for every CLI command, grouped exactly like the [Commands](#commands) section below.
+- **Objects** — a tabular browser for cached AD objects (users, machines, groups, GPOs, certificate templates, certify2 results, GPO-hunt results, trusts). Each row carries a context menu with one-click actions: change password, unlock, enable / disable, add-to-group, remove-from-group, change SAM name, change owner, grant DCSync, grant AddMember, grant LAPS read, plus jump-to-DN. The data behind it is populated by running the bulk fetchers (`users`, `machines`, `groups`, `gpos`, `trusts`, `certtemplates`, `certify2`, `gpohunt`) and is persisted in the session DB so you do not have to refetch on every tab switch.
+- **Browser** — a tree-style LDAP directory browser rooted at the domain DN. Lazy-loads each container's children via a `listDirectory` RPC; clicking an entry on the right-hand pane shows all its attributes (with `objectClass` icons, decoded GUIDs / SIDs, and SDDL for security descriptors).
+- **Query** — a dedicated raw-query builder with explicit fields for **base DN**, **scope** (`base` / `one` / `sub`), **filter**, and **attribute list**. Has a preset library (LDAP_QUERY_PRESETS) for common recon filters (kerberoastable users, DCs, computers, GPOs, etc.), per-result detail view, in-result search, last-10 history, and execution-time display.
+- **Vulns** — Enterprise-only. Renders the structured findings produced by [`vulncheck`](#vulncheck) with severity colours (CRITICAL / HIGH / MEDIUM / LOW / INFO), filtering, search, expandable per-finding object lists, and pagination. The Vulns tab only appears on builds where `licenseType === 'remote'` (i.e. the Enterprise / WASM-pro distribution).
+- **Jobs** — long-running background commands and a stop button.
+- **History** — full command history for the session.
+- **Settings** / **Debug** — connection parameters and protocol-level debug output.
+
+Every tab is fed by the same backend session — running a CLI command (e.g. [`users`](#additional-commands)) directly populates the **Objects** tab; running [`vulncheck`](#vulncheck) directly populates the **Vulns** tab; etc. There is no "fetch data for the GUI" button — interacting with the GUI sends the right CLI command for you, and the result is stored in the session DB so the next tab open is instant.
+
+---
 
 ## Commands
-As usual, all functionalities will be discussed in command groups which logically group commands of similar nature.
+
+Every command below is callable from the session console (and most from the **Commands** GUI tab as a button). The grouping mirrors the `help` output of the running session.
+
+All commands return `(result, error)` on the backend. Many also accept `to_print=False` to suppress the human-readable output while still returning the structured result — useful when chaining commands from scripts. Where a command takes that flag, it is documented as such.
+
+---
 
 ### CONNECTION
+
 #### login
-Performs an LDAP login to the target server using the credentials selected when creating the LDAP client. If you get the error `'LDAPClient' object has no attribute 'connection'` you simply forgot to logon.
+Opens the LDAP/LDAPS connection, performs the chosen authentication exchange, fetches the AD info (`adinfo`) for the prompt, refreshes the credential's SID from the server (`whoamifull`), and proactively builds the privileged-groups cache used later by [`privcheck`](#privcheck) and [`privcheckall`](#privcheckall). Spins up a connection-monitor task so the session auto-fires `logout` if the server drops the link.
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print status messages.
+
 #### logout
-Terminates the connection after logging out gracefully. If some commands do not return any output try logging out and back in.
+Cancels the connection-monitor task, disconnects the LDAP client, and resets the connection-status pill.
+
+---
 
 ### INFO
+
 #### ldapinfo
-This command prints out the LDAP root query results. This information is available to unauthenticated users (without NONE type credentials). To authenticate without any credentials, create credentials without any information of type of NONE. Then use these credentials and create an LDAP client with the Authentication Protocol SIMPLE selected in the dropdown. You will still need to first run the `login` command before being able to use the command. 
+Prints the full DSA / RootDSE info as returned by the server (`get_server_info`). Includes naming contexts, supported controls, supported SASL mechanisms, vendor, version, and schema/configuration NCs. Cached on first call — re-call is free.
 
-This command can act as a simple sanity check and enables you to retrieve the domain name, version and  auth types supported by the server without any credentials.
-
-The output of the supportedControl attribute defines LDAP extension (as LDAP only comes with simple actions such as add, delete, ...). These represent the supported Object Identifiers (OIDs). 
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print the result.
 
 #### adinfo
-This connection prints out basic information about the current AD forest, such as the domain name. The returned attributes are useful for determining further attack proceedings. It contains the password lockout policy you need to know to if you want to conduct password spraying attacks without locking out users. The machine account quota determines how many machine accounts a normal domain user can add (This can be useful for some delegation attacks such as a resource based contrained delegation attack - for more info on that attack see the command: [addallowedtoactonbehalfofotheridentity](#addallowedtoactonbehalfofotheridentity) and some more detailed information at https://www.thehacker.recipes/ad/movement/kerberos/delegations/rbcd).
+Fetches the domain object (`(objectClass=domainDNS)` at the root) and caches its key fields (`distinguishedName`, `objectSid`, `domain_name`). Required by most commands and called automatically by [`login`](#login). Also pushes the parsed info to the GUI as `ADINFO` / `DOMAINS` so the Browser tab knows where to root the tree.
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print the result.
 
 #### whoami
-Performs a whoami LDAP query, prints out the domain, username and group membership information of the current user. Since a lot of further commands will need the full distinguished name (DN) for operation, note that you can convert the SID to a distinguished name using the `sid2dn` command. You might also want to find other users in the groups you are in, using the DN you can then also use the `groupmembers` command to list all group members in groups with you.
+Calls the LDAP `Who Am I?` extended operation **plus** the additional `whoamifull` helper that resolves the bound principal's SID, sAMAccountName, domain, and `tokenGroups` (every group the user is a transitive member of, expanded by the server).
 
 #### whoamisimple
-Performs a whoami LDAP query, prints out only the domain and username in a single line.
+Just the bare `Who Am I?` extended op — returns the server's view of the bound principal (typically `u:DOMAIN\user`).
+
+---
 
 ### ROAST
-These commands allow you to list potential targets available for kerberoasting and as-rep roasting. To exploit the vulnerabilities, refer to the [Kerberos Plugin](kerberos.html). If you just want to exploit, then you do not need to list the SPNs here first. It is enough to simply create an LDAP client enter the LDAP client ID in the Kerberos plugin.
-#### spns
-Lists all user objects who have `servicePrincipalName` set. This serves as enumeration for the Kerberoasting attack. If a user (other than `krbtgt`) has an SPN set it is possible to retrieve a TGS ticket and possibly decrypt the password of the user offline, if you are able to crack the password.  
 
-!!! info
-	To run a Kerberoasting attack on all users you can enter the Client ID of this LDAP plugin in the [kerberoast](kerberos.html#kerberoast) command. 
+#### spns
+Lists kerberoastable user accounts — users with a non-empty `servicePrincipalName` attribute (`(&(objectClass=user)(servicePrincipalName=*))`). For each match prints the `sAMAccountName`. Pair with the [Kerberos client](./kerberos.md)'s `kerberoast` to actually request and crack the TGS tickets.
 
 #### asrep
-Lists all user objects who have the UAC_PASSW_NOTREQ flag set. This serves as enumeration for the AS-REP Roasting attack. If a user has this flag set it is possible to retrieve their AS-REP hashes and crack the and then crack the password of the user offline.
+Lists ASREP-roastable user accounts — users with the `DONT_REQ_PREAUTH` (`0x400000`) bit set in `userAccountControl`. Pair with the [Kerberos client](./kerberos.md)'s `asreproast` to request and crack the unprotected AS-REP responses.
+
+#### spninfo
+Like [`spns`](#spns), but pretty-prints a table for every SPN with `sAMAccountName`, `servicePrincipalName`, `memberOf`, `pwdLastSet`, `lastLogon`, decoded delegation flags (unconstrained / constrained), and `description`. Useful for triaging which SPN to attack first (look for stale `pwdLastSet`, juicy `description`, low `pwdLastSet` age vs. policy).
+
+---
 
 ### ENUMERATION
-#### computeraddr
-Lists all machine account's DNS name. This lists all computers in the domain. This can be used to identify possibly interesting targets in the domain without doing a port scan on the netowrk. 
-#### targetenum
-Fetches all machine account hostnames and adds them to the `Targets Window`. In case a default `resolver` is set up with an active `DNS session` all domain names will be resolved as well before storing them in the `Targets Window`. To do that, create a client of type DNS. 
 
-!!! info "Troubleshooting"
-	Make sure you have clicked the login button, otherwise you will get the error `Exception: 'NoneType' object has no attribute '_ldapinfo'`.
+#### domainmanager
+Registers the current LDAP session with OctoPwn's **Domain Manager** subsystem — auto-logs in if needed and adds the domain to the global domain registry. Used by other clients (and the Enterprise UI) to share the LDAP session as the project's authoritative domain context.
+
+#### computeraddr
+Lists every computer account in the domain by `dNSHostName`, falling back to `<sAMAccountName-without-trailing-$>.<domain>` when `dNSHostName` is empty. Returns the resolved hostname list — useful as input for downstream port-scanning / SMB recon.
+
+#### targetenum
+Enumerates every machine account and bulk-adds them to OctoPwn's **Targets** registry. For each computer it:
+
+- derives the FQDN (or falls back to `<sam-without-$>.<domain>`);
+- derives a default port set (`445/TCP` plus any port hints from each SPN, e.g. `MSSQL` → `1433`, `WSMAN` → `5985`, etc.);
+- captures `userAccountControl`, the `objectSid`, the OS strings, and the `description`;
+- marks it as a DC if `userAccountControl` carries `SERVER_TRUST_ACCOUNT`;
+- optionally resolves the IP via AD-integrated DNS.
+
 ##### Parameters
-- resolve: Specifies if you want the DNS resolver to automatically resolve the target host names so they are correctly populated in the targets window. 
+- **ldapresolve** *(optional, bool, default `False`)*: Resolve every host to an IP via [`dnsquerya`](#additional-commands) before adding it. Slow on large domains.
+- **resolve** *(optional, bool, default `False`)*: Pass `resolve=True` down to OctoPwn's Targets manager so it resolves the IPs again with the global resolver after the bulk insert.
 
 #### dump
-Fetches detailed user and machine account information and stores it in two separate .tsv files. To access the files go to the file browser window and browse to `/browserfs/volatile`. From there you can download the file to your local Downloads folder. We recommend checking the user and machine descriptions for passwords or otherwise sensitive information.
+Streams every user and every computer account to two TSV files (`users_<ts>.tsv`, `computers_<ts>.tsv`) in the OctoPwn working directory using the canonical `MSADUser_TSV_ATTRS` column set. No filtering, no decoration — useful when you need a flat dump for offline tools (BloodHound CE community edition, custom analyzers, …).
+
+#### fulldump
+Heavy-duty offline dump: writes ten separate TSV / JSON files (`adinfo`, `schema`, `trusts`, `users`, `computers`, `groups`, `ous`, `containers`, `gpos`, `dns`) plus packs them all into a single LZMA-compressed `dump_<ts>.zip` in the OctoPwn working directory. Suitable for offline forensic analysis.
 
 #### tree
-Prints out a tree from the given DN, with a given depth.
+Prints an ASCII tree starting from the given DN (default: the domain root) down to the given depth (default: 1).
 
 ##### Parameters
-- **dn** (optional): Distinguished name from where the tree should be created. E.g. `CN=Computers,DC=sevenkingdoms,DC=local`. If no parameter is given the base domain level (such as `DC=sevenkingdoms,DC=local` is listed)
-- **level** (optional): Depth of the enumeration
+- **dn** *(optional, str)*: DN to root the tree at. If a number is passed here it is treated as a depth override and the DN defaults to the domain root.
+- **level** *(optional, int, default `1`)*: Depth of the tree.
 
 #### bloodhound
-This command runs a custom [bloodhound](https://bloodhound.readthedocs.io/en/latest/index.html) ingestor. It will gather information on domains, computers, users, gpos, groups and containers. The output is saved into the FILE browser under `/browserfs/volatile` as a standard bloodhound zip file. You can then import the file into bloodhound. 
+Runs the embedded `MSLDAPDump2Bloodhound` collector against the current connection and writes a BloodHound-compatible ZIP into the OctoPwn working directory (`work_dir`). Returns the ZIP path on success. This is the equivalent of running `SharpHound` / `bloodhound.py` against the domain — feed the resulting ZIP to BloodHound (CE or legacy) for graph-based analysis.
 
-!!! info
-	The currently implemented ingestor is written for BloodHound v1, not the newer BloodHound CE. 
+#### userdescription
+Sweeps every user object and prints `sAMAccountName : description` for every user whose `description` attribute is non-empty. The classic "passwords-in-description" discovery.
+
+---
 
 ### QUERY
+
 #### query
-Performs a raw LDAP query, prints out the results on the console.
+The raw LDAP search escape hatch. Sends a server-side paged search and prints every entry's DN and attributes (decoding `bytes` to hex and `SECURITY_DESCRIPTOR` to SDDL).
 
 ##### Parameters
-
-- **query**: This is your raw ldap query, such as (`(&(objectClass=user))`)
-- **attributes**(optional): Specify which attributes you want to query specifically (e.g. `objectName,description`) By default all attributes will be shown.
+- **query**: The LDAP search filter (e.g. `(&(objectClass=user)(adminCount=1))`).
+- **attributes** *(optional, str, default `*`)*: Comma-separated attribute list (e.g. `sAMAccountName,memberOf,description`). `*` returns every non-operational attribute.
+- **basedn** *(optional, str)*: The base DN to search from. Defaults to the domain root.
+- **scope** *(optional, str, default `sub`)*: Search scope. One of `sub` (whole subtree), `one` (one level below the base), `base` (just the base DN itself).
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
 
 #### modify
-Performs an LDAP query to modify any attribute you define, as long as you have the permission to do that. 
+Generic LDAP modify — replaces a single attribute with a single value on a target object. Only works for string-typed attributes; for binary attributes (security descriptors, `msDS-AllowedToActOnBehalfOfOtherIdentity`, etc.) use the dedicated commands ([`setsd`](#setsd), [`addallowedtoactonbehalfofotheridentity`](#addallowedtoactonbehalfofotheridentity), …).
 
 ##### Parameters
+- **dn**: DN of the object to modify.
+- **attribute**: Name of the attribute to replace.
+- **value**: New value.
 
-- **dn**: This the distinguished name of the object you want to modify. (e.g. `CN=renly.baratheon,OU=Crownlands,DC=sevenkingdoms,DC=local`)
-- **attribute**: Specify which attribute you want to modify. (e.g. `displayName`) 
-- **value**: Specify the value the attribute should be set to.
+---
 
 ### USER
-#### user
-Fetches detailed information of a user object based on its SAMAccountName. The information can be useful to show the groups a user is a member of, if he is enabled, or when he last logged in. 
 
-##### Parameter
-- **samaccountname**: The SAMAccountname (normal username) of the user. E.g. `cersei.lannister`
+#### user
+Fetches a single user object by `sAMAccountName` and pretty-prints all known fields.
+
+##### Parameters
+- **samaccountname**: The user's sAMAccountName (without `DOMAIN\` prefix).
 
 #### adduser
-Adds a new user to the domain with a given DN and password. This will only work if you have the correct permissions assigned to the user account you created the session with.
+Creates a new user object at the given DN with the given password.
 
 ##### Parameters
-- **user_dn**: The distinguished name of the user you want to add. (e.g. `CN=mynewuser,OU=Users,DC=sevenkingdoms,DC=local`)
-- **password**: The password you want to set. Please note that it needs to correspond to the password policy, or the command will fail. 
-
-!!! question "Troubleshooting"
-	- You get the error: `Cannot fulfill request error`: You have to use an encrypted connection to modify the password. When creating a client you need to choose the `LDAPS` instead of `LDAP` as client type!
-	- Error: `LDAP Add operation failed on DN user! Result code: "noSuchObject"`: You probably used the SAM Account name. You need to use the full distinguished name.
-	- Result code: `entryAlreadyExists`: The user already exists. If you want to change the password of an existing user, use the `changeuserpw` function
-	- Result code: `unwillingToPerform`: The password does not correspond to the password policy, choose a better password.
-	- Result code: `insufficientAccessRights`: You do not have the permissions to perform the operation. Use a user with the appropriate privileges.
+- **user_dn**: Full DN where the user object will be created (e.g. `CN=newuser,CN=Users,DC=test,DC=corp`).
+- **password**: Initial password.
 
 #### deluser
-Deletes a user account given its DN. This will only work if you have the correct permissions assigned to the user account you created the session with.
+Deletes the user object at the given DN. **Irreversible** — domain admins can recover from tombstones, but everyone else cannot.
 
-##### Parameter
-- **user_dn**: The distinguished name of the user you want to delete. (e.g. `CN=idontwantyou,OU=Users,DC=sevenkingdoms,DC=local`)
+##### Parameters
+- **user_dn**: Full DN of the user to delete.
 
 #### changeuserpw
-Changes a user's password. This will only work if you have the correct permissions assigned to the user account you created the session with, also you must use an `LDAPS` Client/an encrypted LDAP connection. 
+Changes a user's password. If `oldpass` is supplied the change is performed via the user-self path (works without admin); if omitted, the change is performed administratively (requires `Reset Password` extended right). On success a `password` credential is auto-stored in the OctoPwn credential store. On `constraintViolation` errors the command prints a friendly explanation of the typical causes (history, complexity, lockout, missing old password).
 
 ##### Parameters
-
-- **user_dn**: The distinguished name of the user you want to change the password of. (e.g. `CN=cersei.lannister,OU=Users,DC=sevenkingdoms,DC=local`)
-- **newpass**: The new password you want to set. The new password needs to comply to the password policy! 
-- **oldpass (optional)**: If you want to change your own or another user's password as a non-admin you have to supply the old password. If you are not an administrator, you will need to provide the oldpassword. You can change the password of any user with his old password.
-??? question "Troubleshooting"
-	- You get the error: `constraintViolation`: Changing the password is only possible from an **encrypted LDAPS Client**. Create an LDAPS client from the clients window on the side and try changing the password with an encrypted session again. 
-	- Error: `LDAP Add operation failed on DN user! Result code: "noSuchObject"`: You probably used the SAM Account name. You need to use the full distinguished name.
-	- Result code: `unwillingToPerform`: The password does not correspond to the password policy, choose a better password. You need to keep in mind the minimum password age, if you or the user recently changed the password you might not be able to change it immediately. Be aware of the password complexity and length of the password. 
-	- Result code: `insufficientAccessRights`: You do not have the permissions to perform the operation. Use a user with the appropriate privileges.
+- **user_dn**: Full DN of the target user.
+- **newpass**: New password.
+- **oldpass** *(optional, str)*: Old password — required for self-service change, omit for admin reset.
 
 #### unlockuser
-Unlocks a user account. This will only work if you have the correct permissions assigned to the user account you created the session with, also you must use `LDAPS` or an encrypted LDAP connection.
-#### enableuser
-Enables a user account. This will only work if you have the correct permissions assigned to the user account you created the session with, also you must use `LDAPS` or an encrypted LDAP connection.
+Unlocks an account by setting `lockoutTime` to `0`.
 
-##### Parameter
-- **user_dn**: The distinguished name of the user you want to enable. (e.g. `CN=disabledUser,OU=Users,DC=sevenkingdoms,DC=local`)
+##### Parameters
+- **user_dn**: Full DN of the locked user.
+
+#### enableuser
+Enables a disabled user by clearing the `ACCOUNTDISABLE` bit in `userAccountControl`.
+
+##### Parameters
+- **user_dn**: Full DN of the user.
 
 #### disableuser
-Disables a user account. This will only work if you have the correct permissions assigned to the user account you created the session with, also you must use `LDAPS` or an encrypted LDAP connection.
+Disables a user by setting the `ACCOUNTDISABLE` bit in `userAccountControl`.
 
-##### Parameter
-- **user_dn**: The distinguished name of the user you want to disable. (e.g. `CN=enabledUser,OU=Users,DC=sevenkingdoms,DC=local`)
+##### Parameters
+- **user_dn**: Full DN of the user.
 
 #### addspn
-Assigns an SPN to a given DN, similar to the setspn command. This will only work if you have the correct permissions assigned to the user account you created the session with, also you must use `LDAPS` or an encrypted LDAP connection. 
-This can be useful for a targeted kerberoasting attack, if you don't want to change the password. More information can be found here: [Targeted Kerberoasting](https://www.thehacker.recipes/ad/movement/dacl/targeted-kerberoasting)
+Appends an entry to the user's `servicePrincipalName` multi-value attribute. A common kerberoasting setup step (give yourself an SPN on a controlled account so it becomes kerberoastable, request the TGS, crack offline).
 
 ##### Parameters
-- **user_dn**: The distinguished name of the account you want to set the SPN on. (e.g. `CN=cersei.lannister,OU=Crownlands,DC=sevenkingdoms,DC=local`)
-- **spn**: The service principal name you wish to set. (e.g. `MSSQLSvc/kingslanding.sevenkingdoms.local`)
+- **user_dn**: Full DN of the user.
+- **spn**: SPN to add (e.g. `MSSQLSvc/dummy.test.corp:1433`).
 
 #### delspn
-Removes an SPN record from a given DN. This will only work if you have the correct permissions assigned to the user account you created the session with, also you must use `LDAPS` or an encrypted LDAP connection.
+Removes an entry from the user's `servicePrincipalName` multi-value attribute.
 
 ##### Parameters
-- **user_dn**: The distinguished name of the user you want to delete the SPN from. (e.g. `CN=cersei.lannister,OU=Crownlands,DC=sevenkingdoms,DC=local`)
-- **spn**: The service principal name you wish to set. (e.g. `MSSQLSvc/kingslanding.sevenkingdoms.local`)
+- **user_dn**: Full DN of the user.
+- **spn**: SPN to remove.
+
 #### addusertogroup
-Assigns a user to a specific group. This will only work if you have the correct permissions assigned to the user account you created the session with, also you must use `LDAPS` or an encrypted LDAP connection.
+Adds a user to a group by appending the user's DN to the group's `member` attribute. Both arguments must be full DNs.
 
 ##### Parameters
-- **user_dn**: The distinguished name of the user you want to add to a group. (e.g. `CN=cersei.lannister,OU=Crownlands,DC=sevenkingdoms,DC=local`)
-- **group_dn**: The distinguished name of the group you want to add the user to. (e.g. `CN=Domain Admins,CN=Users,DC=sevenkingdoms,DC=local`) If you don't know the DN of a group name, you can retrieve it using the SAM account name with the `sam2dn` command. 
+- **user_dn**: User DN.
+- **group_dn**: Group DN.
 
 #### deluserfromgroup
-Removes a user from a group. This will only work if you have the correct permissions assigned to the user account you created the session with, also you must use `LDAPS` or an encrypted LDAP connection.
+Removes a user from a group.
 
 ##### Parameters
-- **user_dn**: The distinguished name of the user you want to remove from a group. (e.g. `CN=cersei.lannister,OU=Crownlands,DC=sevenkingdoms,DC=local`)
-- **group_dn**: The distinguished name of the group you want to remove the user from. (e.g. `CN=Domain Admins,CN=Users,DC=sevenkingdoms,DC=local`) If you don't know the DN of a group name, you can retrieve it using the SAM account name with the `sam2dn` command. 
+- **user_dn**: User DN.
+- **group_dn**: Group DN.
+
+---
 
 ### MACHINE
+
 #### machine
-Fetches detailed information of a computer object based on its SAMAccountName. 
-
-##### Parameter
-- **samaccountname**: The SAMAccountName of the computer you wish query information for. (e.g. `KINGSLANDING$`). For machine accounts you MUST include the `$` sign.
-
-#### addhostname
-Adds an additional hostname to a computer account. You need the appropriate permissions to write the hostname.
-
-{==msds-additionaldnshostname, used for https://www.thehacker.recipes/ad/movement/kerberos/delegations/unconstrained==}
+Fetches a machine object by `sAMAccountName` (computer accounts end in `$`, but the trailing `$` is automatically appended by the underlying lookup if missing). Also decodes the `msDS-AllowedToActOnBehalfOfOtherIdentity` security descriptor to SDDL for resource-based-constrained-delegation analysis.
 
 ##### Parameters
-
-- **user_dn**: The distinguished name of the computer account to which you want to the DNS hostname to. (e.g. `CN=KINGSLANDING,OU=Domain Controllers,DC=sevenkingdoms,DC=local`) {==Is the name of the parameter incorrect here?==}
-- **hostname**: The DNS name you want to point to the computer specified in the `user_dn` parameter. (e.g. `test2.sevenkingdoms.local`)
-
-{==Where is this added? I can't seem to resolve this additional hostname after successfully adding it... I can see it in the SPNs though==}
-
-#### pre2000
-Lists all machine account which were created a Pre-Windows 2000 compatible machine account. This computer accounts have insecure passwords set. More information can be found here: [Pre-Windows 2000 computers](https://www.thehacker.recipes/ad/movement/domain-settings/pre-windows-2000-computers)
+- **samaccountname**: The machine's sAMAccountName.
 
 #### computeradd
-Adds a machine account with the specified password. By default any domain user can add a machine account to the Active Directory. To check if this is possible, check the `adinfo` command. If it is zero, you will need to have the permission to add machine accounts.
+Creates a new computer account, respecting MachineAccountQuota (so unprivileged users can usually create one — see [`maq`](#maq)). Returns the auto-generated computer name and password (which is also stored as a `Credential` in the OctoPwn credential store, tagged `LDAP-COMPUTERADD-<sessionid>`).
 
 ##### Parameters
-- **computername**: The name of the computer object you want to add. {==What format? just `computer`or `computer$`?==}
-- **password**: The plain text computer password you want the computer object to have.
+- **computername** *(optional, str)*: Desired sAMAccountName (without trailing `$`). If omitted, a random one is generated.
+- **password** *(optional, str)*: Desired password. If omitted, a random one is generated.
 
-{==Error:  Exception: 'MSLDAPClientConnection' object has no attribute 'add_computer==}
+#### addhostname
+Appends an entry to the computer account's additional-hostnames list (`msDS-AdditionalDnsHostName` / `servicePrincipalName`). Used for SPN-spoofing tricks during Kerberos-relay setups.
+
+##### Parameters
+- **user_dn**: Full DN of the computer account.
+- **hostname**: Additional hostname to register.
+
+#### pre2000
+Lists machine accounts that were created with the legacy "Assign this computer account as a pre-Windows 2000 computer" tickbox — `(&(userAccountControl=4128)(logonCount=0))`. These accounts famously have a known default password (the lower-cased machine name, no trailing `$`) and are a recurrent privilege-escalation primitive.
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### computeraddr
+*(Listed under [ENUMERATION](#enumeration) — included in the MACHINE help group as well.)*
 
 #### changesamaccountname
-Changes the samaccountname attribute of an active directory object. 
+Changes the `sAMAccountName` of an arbitrary object by DN — used during the original noPac / sAMAccountName-spoofing attack chain.
 
 ##### Parameters
-- **dn**: The distinguished name of the user or machine you want to change the samaccountname of. E.g. `CN=cersei.lannister,OU=Crownlands,DC=sevenkingdoms,DC=local`
-- **newname**: The new samAccountName. E.g.  `cersei.baratheon`
+- **dn**: DN of the object.
+- **newname**: New `sAMAccountName` value.
 
-{== 'MSLDAPClientConnection' object has no attribute 'change_samaccountname' Shouldn't that be under users?==}
+#### domaincontrollers
+Lists every domain controller in the current domain (using `(&(objectCategory=computer)(primaryGroupId=516))`).
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+---
 
 ### GPO
+
 #### gpos
-Lists all Group Policy objects in the current domain.
+Lists all Group Policy Objects (GPOs) in the domain — `displayName`, GPO GUID, file-system path (`\\<domain>\SYSVOL\…`), and `versionNumber`.
 
-### LAPS
-The Local Administrator Password Solution (LAPS) from Microsoft which exists in a legacy and a newer Windows LAPS implementation, manages unique local administrator passwords for domain-joined computers and securely stores them in Active Directory (AD). To access LAPS-managed passwords, users require specific privileges: the "Read" permission on the ms-Mcs-AdmPwd attribute, membership in designated AD groups like "Domain Admins," or specifically delegated permissions.
-
-#### laps
-This is the legacy LAPS implementation. It prints all machine accounts and plaintext passwords for the local admin user of said accounts. You'd need to have the necessary permission to do this. The legacy LAPS allows reading the password from the object directly.
-
-#### newlaps
-This is the new Windows LAPS implementation. It prints the encrypted blobs containing of all (or some) machine account's local administrator passwords for which your user has access to. You need to decrypt these blobs using an `SMB session`. 
-
-{==How do I use this with an SMB session? do i just create the SMB session and it works automatically? Don't have LAPS in my lab = > more dev time needed, seperate feature later on==}
-
-### GROUP
-#### groupmembership
-Retrieves a list of groups to which the specified distinguished name (DN) belongs (is a member of).
-
-##### Parameter
-- **dn**: The distinguished name (DN) of the Active Directory (AD) object for which you wish to determine group membership. (e.g. `CN=cersei.lannister,OU=Crownlands,DC=sevenkingdoms,DC=local`).
-
-#### groupmembers
-Retrieves a list of members belonging to a specified group.
+#### gpohunt
+For a given user (or SID) — or the current bound principal if no argument is given — evaluates every GPO's security descriptor with the user's expanded `tokenGroups` and reports the **effective access mask** plus any directly-granted permissions on each GPO. Use it to find GPOs your token can write to (`GENERIC_WRITE`, `WRITE_DACL`, `WRITE_OWNER`, …) — the classical GPO-takeover preconditions.
 
 ##### Parameters
+- **username_or_sid** *(optional, str)*: A SID (`S-1-5-21-…`), a sAMAccountName, or a comma-separated `<sid>,<extra-sid-1>,<extra-sid-2>,…` blob to manually inject token groups. Defaults to the bound principal.
 
-- **dn**: The distinguished name (DN) of the group whose members you wish to list. Example: `CN=Remote Desktop Users,CN=Builtin,DC=sevenkingdoms,DC=local`.
-- **recursive** (optional): A boolean value indicating whether to retrieve members recursively, including members of subgroups. Set to True for a recursive search or False for a non-recursive search. The default value is True.
+---
+
+### LAPS
+
+#### laps
+Reads the legacy Microsoft LAPS attribute `ms-Mcs-AdmPwd` from every computer object visible to the bound principal (or a single machine if `machinesid` is given). Empty / no-permission entries are surfaced as `<MISSING>`.
+
+##### Parameters
+- **machinesid** *(optional, str)*: Limit to a single machine by SID. Default: enumerate all.
+
+#### newlaps
+Reads the modern Windows LAPS attributes `msLAPS-Password`, `msLAPS-EncryptedPassword`, `msLAPS-EncryptedPasswordHistory`, `msLAPS-EncryptedDSRMPassword`, `msLAPS-EncryptedDSRMPasswordHistory`. Encrypted blobs are printed in hex; decryption requires the appropriate DPAPI keys and is not yet handled by this command.
+
+#### grantreadlapsrights
+Grants the named user / SID **read** rights on the legacy LAPS attribute (`ms-Mcs-AdmPwd`) of a target computer object by appending an `ACCESS_ALLOWED_OBJECT_ACE` with `READ_PROP | WRITE_PROP | CONTROL_ACCESS` over that specific schema attribute's GUID.
+
+##### Parameters
+- **target_dn**: DN of the computer object.
+- **user_dn_or_sid**: DN or SID of the principal to grant rights to.
+
+---
+
+### GROUP
+
+#### groupmembership
+Fetches every group SID that the named DN is a transitive member of (via `tokenGroups`) and resolves each one to a DN.
+
+##### Parameters
+- **dn**: DN of the user / computer.
+
+#### groupmembers
+Returns the members of a group (recursively by default).
+
+##### Parameters
+- **dn**: DN of the group.
+- **recursive** *(optional, bool, default `True`)*: Whether to expand nested groups.
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
 
 #### dadms
-Lists first degree domain admins.
+Lists every member of the **Domain Admins** group (recursive). Sugar around `groupmembers` for the `Domain Admins` SID (`<domain-sid>-512`).
+
+#### privcheck
+Checks whether a given principal is a member (directly or indirectly) of any privileged AD group. Looks up against a cached set of privileged SIDs (built once by the implicit call to [`buildprivgroups`](#additional-commands)): builtin Administrators / Account / Server / Print / Backup Operators / Replicator + Domain Admins / Cert Publishers / Schema Admins / Enterprise Admins / Key Admins / Enterprise Key Admins, plus DnsAdmins / Certificate Operators by name. The lookup tries the local DB first (USERS then MACHINES tables, populated by the bulk fetchers) and falls back to a live `tokenGroups` query.
+
+##### Parameters
+- **cid_dn_sid_sam**: A credential ID, SID, DN, or sAMAccountName.
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+---
 
 ### TRUSTS
 
-In Active Directory (AD) environments, trusts can be bidirectional, allowing reciprocal access between domains, or unidirectional, where only one domain has access privileges to the other.
-
-If you have domain admin rights in a child domain, you can exploit trust relationships to directly escalate privileges into a parent domain. This is achievable using either the krbtgt hash or the Trust Key between the domains.
-
-For one-way inbound trusts, where the trust is inbound from the perspective of your controlled domain, it permits entities in your domain to access resources in the trusted foreign domain. You can abuse this by enumerating and identifying foreign domain groups that include users from your domain. By manipulating these relationships and using tools like OctoPwn to handle Kerberos ticket requests, you can impersonate legitimate foreign domain users, gaining access to systems and resources in the trusted domain.
-
-Conversely, one-way outbound trusts can be partially exploited even though they are designed to restrict your domain’s access to the trusted domain. You can leverage shared credentials stored in Trusted Domain Objects (TDOs), which contain the trust keys (inter-realm keys) automatically updated every 30 days. By extracting these keys, you can impersonate trust accounts in the foreign trusted domain, potentially accessing resources despite the one-way nature of the trust.
-
 #### trusts
-Lists AD trusts.
+Lists every domain trust (`trustedDomain` objects) and adds each trust target as a Target with `isdc=True` and the standard DC port set (389/88/445). Useful as the first step before pivoting across forests.
+
+#### dclist
+Heavy-weight DC enumeration that combines `(&(objectCategory=computer)(primaryGroupId=516))` for the local domain with a per-trust DNS-SRV lookup (`_ldap._tcp.dc._msdcs.<trust-domain>`) to enumerate DCs across every trust as well. Resolves IPs through AD-integrated DNS for everything found. Returns a `{current_domain: [...], trusted_domains: [...]}` structure and prints a per-trust breakdown including direction (Inbound / Outbound / Bidirectional / Disabled), trust type (NT / AD / Kerberos / Azure AD), and decoded trust attributes (Forest Transitive, Within Forest, Cross Organization, Quarantined, PAM Trust, …).
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+---
+
+### POLICY
+
+#### passpol
+Dumps the **default domain password policy** by reading the `domainDNS` object's `minPwdLength`, `pwdHistoryLength`, `maxPwdAge`, `minPwdAge`, `lockoutThreshold`, `lockoutDuration`, `lockOutObservationWindow`, `forceLogoff`, and `pwdProperties`. Decodes the FILETIME durations and the `pwdProperties` complexity flags (`DOMAIN_PASSWORD_COMPLEX`, `DOMAIN_PASSWORD_NO_ANON_CHANGE`, `DOMAIN_PASSWORD_NO_CLEAR_CHANGE`, `DOMAIN_LOCKOUT_ADMINS`, `DOMAIN_PASSWORD_STORE_CLEARTEXT`, `DOMAIN_REFUSE_PASSWORD_CHANGE`).
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### pso
+Lists Fine-Grained Password Policies (Password Settings Objects) by querying `(objectclass=msDS-PasswordSettings)` under `CN=Password Settings Container,CN=System,<domain-dn>`. For every PSO prints its name, all `msDS-*` policy fields with FILETIME durations decoded, and the list of objects the PSO applies to. Also prints a separate list of objects with `(msDS-PSOApplied=*)`.
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+---
+
+### RECON
+
+#### entraid
+Finds Entra ID (Azure AD Connect) sync infrastructure by:
+
+1. Searching for `MSOL_*` accounts (one per AD Connect connector) — extracts the source server hostname from the account's `description` (`computer <host> configured`).
+2. Searching for `ADSyncMSA*` accounts (group-managed service accounts used by AD Connect 2.x) — resolves their `msDS-HostServiceAccountBL` back to the actual host computer.
+3. Resolving every discovered host to an IP via AD-integrated DNS and adding it as a Target.
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### sccm
+Discovers SCCM / MECM (System Center Configuration Manager) infrastructure (PKI-Recon-1 technique). Looks at:
+
+- The `CN=System Management,CN=System,<domain-dn>` container's DACL — every principal with full control (`0xF01FF`) on this container is an SCCM site server. Group SIDs are recursively expanded to find member machine accounts.
+- `(objectClass=mSSMSSite)` — actual SCCM site definitions with site code / assignment site code.
+- `(objectClass=mSSMSManagementPoint)` — every Management Point with `dNSHostName`, default-MP flag, and site code. Sites with no MP are flagged as **CAS** (Central Administration Site).
+- `(|(samaccountname=*sccm*)(samaccountname=*mecm*)(description=*sccm*)(description=*mecm*)…)` — named SCCM-related users / computers / groups (the "did the admins literally name something sccm" pass).
+
+Every discovered server is added as a Target. Resolves hostnames via AD-integrated DNS.
+
+##### Parameters
+- **recursive** *(optional, bool, default `False`)*: When `True`, group memberships in the named-objects pass are expanded recursively (`memberOf:1.2.840.113556.1.4.1941:=…`).
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### credattrs
+Sweeps every user for password-adjacent LDAP attributes — `info`, `userPassword`, `unixUserPassword`, `comment` — and prints every populated value. Optional grep filter applies to both the `sAMAccountName` and the value itself.
+
+##### Parameters
+- **filter_str** *(optional, str)*: Optional substring filter.
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### usercredsllm
+LLM-driven password discovery. Pulls every user with at least one populated `description` / `info` / `userPassword` / `unixUserPassword` / `comment` attribute, hands them to the configured LLM (via the `instructor` library — model and provider come from the project-wide LLM client), parses the structured `LLMUserPasswordAnalysis` response for password candidates, then **validates each candidate by performing an actual LDAP NTLM bind** against the DC. Valid passwords are stored in the credential store. Honours the domain lockout policy: schedules safe batches (`lockoutThreshold - 1`) and waits the lockout observation window between batches.
+
+##### Parameters
+- **username** *(optional, str)*: Limit analysis to a single user. Default: scan everyone with populated attributes.
+- **batch** *(optional, bool, default `False`)*: Send all users to the LLM in a single batched call. Faster but consumes more tokens per request.
+- **login_timeout** *(optional, int, default `15`)*: Per-bind timeout in seconds.
+
+#### maq
+Prints the domain's `MachineAccountQuota` (read from `adinfo.machineAccountQuota` — no extra LDAP query). Anything > 0 means an unprivileged user can create that many machine accounts via [`computeradd`](#computeradd).
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### obsolete
+Finds **enabled** machine accounts running end-of-life Windows versions (Server 2003 / 2008 / 2012, XP, Vista, 7, 8, 8.1) — `(&(objectCategory=computer)(!(userAccountControl:1.2.840.113556.1.4.803:=2))(operatingSystem=*<obsolete os>*))`. Output includes `pwdLastSet` and `lastLogonTimestamp` so you can spot dormant boxes.
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+---
 
 ### SCHEMA
+
 #### schemaentry
-Used for debugging purposes. Do not use this!
+Fetches a single schema entry by DN (must start with `CN=` and live under the schema NC).
+
+##### Parameters
+- **cn**: DN of the schema object.
+
+#### schemaentryname
+Fetches a single schema entry by attribute / class name (e.g. `ms-Mcs-AdmPwd`).
+
+##### Parameters
+- **name**: The schema entry's `name` (or `lDAPDisplayName`).
+
 #### allschemaentry
-Used for debugging purposes. Do not use this!
+Iterates every schema entry — slow but useful for one-off offline analysis.
+
+---
 
 ### SECURITY DESCRIPTOR
-#### changeowner
-Modifies the owner listed in the `nTSecurityDescriptor` attribute of a specified AD object specified by the distinguished name (DN) in Active Directory.
-
-##### Parameters
-- **new_owner_sid**: SID (Security Identifier) of the AD user or group to be granted ownership permissions for the target. Use the `dn2sid` command to convert a DN into a SID. Example: `S-1-5-21-687080233-923555765-3897950641-1116`.
-- **target_dn**: The DN of the target object for which the specified user or group in the `new_owner_sid` will be assigned ownership permissions. Example: `CN=Small Council,OU=Crownlands,DC=sevenkingdoms,DC=local`
-- **target_attribute** (optional): Specifies the attribute within the AD object that should receive the SID. The default attribute is nTSecurityDescriptor, which contains ownership permissions. Specify this parameter only if you need to write the SID to a different attribute in the AD object.
-
-!!! troubleshooting
-	If you get the error `constraintViolation` you probably do not have the appropriate permission to change the owner.
-
-#### addprivdcsync
-Adds DCSync rights to the given user by modifying the forest's Security Descriptor to add GetChanges and GetChangesAll ACE. You need permissions to change the forest's security descriptor. 
-
-##### Parameters
-- **user_dn**: The user you want to add dcsync privileges for. Example: `CN=tyron.lannister,OU=Westerlands,DC=sevenkingdoms,DC=local`
-- **forest** (optional): {==DN Name of the forest I want to change. Write privileges to the forest DN object needed. Will use current DN of the connection if omitted. Can I just put a foreign domain such as `essos.local` here and it works? I did it and it said it's okay, but I wasn't able to dcsync or see it in done, so I guess no. What else would this be for?==}
-
-#### addprivaddmember
-Grants a user the AddMember privilege for a specific group within the domain. This action authorizes the user to add members to the group but does not include the user as a member of the group.
-
-##### Parameters
-- **user_dn**: The distinguished name (DN) of the user to whom you want to assign the privilege.  Example: CN=tyron.lannister,OU=Westerlands,DC=sevenkingdoms,DC=local
-- **group_dn**: The distinguished name (DN) of the group to which the AddMember privilege will be applied. Example: CN=Small Council,OU=Crownlands,DC=sevenkingdoms,DC=local
-
-#### setsd
-Replaces the security descriptor of a specified distinguished name (DN) in Active Directory. We recommend fetching the old Security descriptor first with `getsd`and then replacing only the relevant parts.
-
-- **target_dn**: The distinguished name (DN) of the AD object whose security descriptor is to be replaced.
-- **sddl**: The raw Security Descriptor Definition Language (SDDL) string that defines the new security settings. For more information on SDDL syntax and structure, refer to Microsoft's official [SDDL documentation](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-definition-language).
 
 #### getsd
-Fetches the security descriptor of a given DN. 
+Fetches the security descriptor of a target object and prints it as SDDL.
 
-##### Parameter
- - **dn**: The distinguished name (DN) of the AD object for which the security descriptor will be fetched.
+##### Parameters
+- **dn**: DN of the target.
+
+#### setsd
+Replaces the security descriptor of a target object with a new one parsed from SDDL.
+
+##### Parameters
+- **target_dn**: DN of the target.
+- **sddl**: New security descriptor as an SDDL string.
+
+#### changeowner
+Changes the **owner** of an object's security descriptor (or of one of its attributes' SDs when `target_attribute` is specified). Useful for the WriteOwner abuse path: take ownership → `setsd` to grant yourself the rights you want.
+
+##### Parameters
+- **new_owner_sid**: SID of the new owner.
+- **target_dn**: DN of the target.
+- **target_attribute** *(optional, str)*: When set, change the owner of this attribute's SD instead of the object's main SD.
+
+#### addprivdcsync
+Modifies the **forest** security descriptor to add the two ACEs (`Replicating Directory Changes` + `Replicating Directory Changes All`) that grant DCSync rights to the named user. After this, the user can be used with the [DCEDRSUAPI client](./dcedrsuapi.md) to dump every secret in the domain.
+
+##### Parameters
+- **user_dn**: DN of the user to grant DCSync to.
+- **forest** *(optional, str)*: Override the forest DN. Defaults to the current domain's distinguishedName.
+
+#### addprivaddmember
+Adds an `AddMember` extended-right ACE to a group's SD so the named user can append themselves (or anyone) to it without being `WRITE`-on-the-group.
+
+##### Parameters
+- **user_dn**: DN of the user being granted the right.
+- **group_dn**: DN of the target group.
 
 #### addallowedtoactonbehalfofotheridentity
+Sets / appends to the target object's `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute — the **resource-based constrained delegation** primitive. Returns the original SD blob in hex (or `None` if there was no prior value), which you should keep around for [`restoreallowedtoactonbehalfofotheridentity`](#additional-commands) cleanup.
 
-This command can be used to abuse Resource-Based Constrained Delegation. 
+##### Parameters
+- **target_dn**: DN of the target object (typically a computer account).
+- **other_identity_sid**: SID of the identity being allowed to delegate to the target (typically a controlled computer account from [`computeradd`](#computeradd)).
 
-Resource-based Constrained Delegation (RBCD) is a powerful mechanism in Active Directory that can be exploited using commands like `addallowedtoactonbehalfofotheridentity` (from the LDAP client), `s4uself`, and `s4uproxy` commands (from the Kerberos client) to escalate privileges and gain unauthorized access to network resources. Here's how these components work together in an RBCD attack scenario:
+#### add_genericwrite
+Appends an `ACCESS_ALLOWED_ACE` with `GENERIC_WRITE` over the target object's DACL, giving the named user `GenericWrite` on the target. Used as a building block for many AD attack paths.
 
-##### Understanding Resource-Based Constrained Delegation
-RBCD allows a computer or service in Active Directory to delegate to another computer or service. This is controlled through the `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute on a target computer object, which specifies which principals (users or computers) are permitted to delegate their identity to the target. Modifying this attribute to include an attacker-controlled principal can set the stage for a delegation-based attack.
+##### Parameters
+- **targetdn**: DN of the object being modified.
+- **userdn**: DN of the user being granted the right.
 
-More detailed information on RBCD can be found [here](https://www.thehacker.recipes/ad/movement/kerberos/delegations/rbcd).
-
-##### Step-by-Step Exploitation Process
-
-- Setup with `addallowedtoactonbehalfofotheridentity`:
-  Use the `addallowedtoactonbehalfofotheridentity` command to modify the `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute of a target computer object in AD. This is done by specifying a principal that the attacker controls and which has a Service Principal Name (SPN). The SPN is crucial for Kerberos to function properly in these delegation scenarios.
-
-- Ticket Manipulation with `s4uself` command (Kerberos Client):
-  s4u2self is a Kerberos extension used to obtain a service ticket on behalf of any user (even those who have not authenticated via Kerberos) to the service running under the account executing the command. In an RBCD context, s4u2self is used to acquire a service ticket for the attacker-controlled account specified in the `msDS-AllowedToActOnBehalfOfOtherIdentity` attribute. This service ticket impersonates a high-privilege user.
-
-- Extending Access with `s4uproxy` command (Kerberos Client):
-  After obtaining an initial service ticket with `s4uself`, `s4uproxy` can be employed to request access to additional services on behalf of the impersonated user. It uses the previously obtained ticket to request another service ticket for a different service that the initial account is allowed to delegate to. 
-
-##### Practical Application and Parameters
-- Using `addallowedtoactonbehalfofotheridentity`:
-	- Parameters:
-        - **target_dn**: The distinguished name (DN) of the target Active Directory object for which you want to configure delegation. This is usually a computer object within the domain that will be permitted to act on behalf of another identity.
-        - **other_identity**: The Security Identifier (SID) of the user or computer that will be allowed to act on behalf of the target specified in `target_dn`. This identity is granted the ability to impersonate the target object when requesting access to resources. 
-
-        {==How do I abuse it with your tool, especially the s4uself and s4uproxy part==}
-
-        ```
-        execute-assembly Rubeus.exe s4u /user:computer where we have computer account nt hash of$ /rc4:<rc4 hash of this computer> /impersonateuser:<localadmin da or dc> /msdsspn:cifs/TargetComputer /ptt
-        ```
-
-To effectively add permissions using commands like `addallowedtoactonbehalfofotheridentity` in an RBCD scenario, certain prerequisites and permissions are necessary. These are often identified through tools such as BloodHound, which can visualize and pinpoint specific AD permissions and misconfigurations. Here's a brief explanation of what is required to successfully manipulate AD attributes for escalating privileges:
-
-- _GenericWrite_:
-    This permission allows a user to modify most attributes of an object in Active Directory, which is essential for setting up conditions for RBCD attacks. It doesn't include permissions to modify security-sensitive attributes directly, but includes the ability to set the msDS-AllowedToActOnBehalfOfOtherIdentity attribute directly.
-
-- _GenericAll_:
-    This is a more extensive permission that includes GenericWrite but also allows full control over the object, including the ability to modify security descriptors and change ownership. With GenericAll, an attacker can completely control an AD object, 
-
-- _WriteOwner_:
-    This permission specifically allows a user to change the owner of an AD object. Changing ownership is crucial because, as the owner, a user gains the ability to modify the object’s discretionary access control list (DACL). Before utilizing this, you might need to first establish yourself as the owner, which can be facilitated through the `changeowner` command, as described here.
-
-- _Owner_:
-	If you are the owner you will need to grant yourself at least GenericWrite privileges on the object you want to modify by using the `setsd` command.
-
-- _WriteDACL_:
-    With the ability to modify the DACL of an object, a user can grant themselves or others additional permissions on that object by adjusting the security descriptor using the `setsd` command, allowing you to specify exactly what permissions are added or removed.
+---
 
 ### SID
-#### sidresolv
 
-Resolves the username and domain for a given Security Identifier (SID).
-
-##### Parameter
-
-- sid: The Security Identifier (SID) of the user or object whose details are to be resolved.
+The five resolution helpers — every command takes a `to_print` flag.
 
 #### sid2dn
-Retrieves the Distinguished Name (DN) for an object based on its Security Identifier (SID).
+Resolves a SID to a DN via `LDAP://<DC>/<SID=…>` syntactic search.
 
-##### Parameter
-- **sid**: The SID of the object for which the DN is required.
+##### Parameters
+- **sid**: The SID string.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the DN.
 
 #### dn2sid
-Fetches the Security Identifier (SID) of an object identified by its Distinguished Name (DN).
+Reads `objectSid` from the named DN.
 
-##### Parameter
-- **dn**: The DN of the object whose SID is to be retrieved.
-
-#### dn2sam
-{==does not work==}
-Retrieves the sAMAccountName of an object identified by its Distinguished Name (DN).
-
-##### Parameter
-- **dn**: The DN of the object for which the sAMAccountName is required.
+##### Parameters
+- **dn**: The DN.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the SID.
 
 #### sam2dn
-{==does not work==}
-Fetches the Distinguished Name (DN) of an object using its sAMAccountName.
+Looks up the DN of the object with the given `sAMAccountName`.
 
-##### Parameter
-- **sAMAccountName**: The sAMAccountName of the object whose DN is needed.
+##### Parameters
+- **sAMAccountName**: The sAMAccountName.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the DN.
+
+#### dn2sam
+Reads `sAMAccountName` from the named DN.
+
+##### Parameters
+- **dn**: The DN.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the sAMAccountName.
+
+#### sidresolv
+Calls the `LsarLookupSids` equivalent through LDAP and prints `<DOMAIN>\<username>`.
+
+##### Parameters
+- **sid**: The SID.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the result.
+
+---
 
 ### GMSA
-#### gmsa
-The `gmsa` command allows for reading the passwords of Group Managed Service Accounts (gMSA), which is used for services and tasks requiring privileged access. Access to read gMSA passwords is permissible only when an entity controls an object with adequate permissions outlined in the target gMSA account’s msDS-GroupMSAMembership attribute's Discretionary Access Control List (DACL). Typically, these are principals explicitly allowed to use the gMSA account. 
 
-More information can be found [here](https://web.archive.org/web/20240228044821/https://cube0x0.github.io/Relaying-for-gMSA/).
+#### gmsa
+Lists every group-managed service account (`(objectClass=msDS-GroupManagedServiceAccount)`) and — for every gMSA the bound principal is allowed to read — fetches the `msDS-ManagedPassword` blob, decodes it to the gMSA's current password (cleartext) and NT hash, and stores the password as a `pwb64` credential in the OctoPwn credential store. Prints the list of allowed principals (the `PrincipalsAllowedToRetrieveManagedPassword` SDDL ACEs) for every gMSA so you know who can read what.
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+---
 
 ### PKI
-#### certify
-This command is a lightweight implementation of Certipy, designed to analyze certificate templates within an Active Directory environment. Set `cmd` to `vuln` to find vulnerable certificates. It lists all/vulnerable certificate templates (depending on the cmd). 
 
-When using the `vuln` command you can encounter the following outputs:
-
-- Enrollee supplies subject: This is ESC1, see the [SMB Client certreq command](smb.html#certreq) on how to abuse it.
-{==TODO What can we do with the others?==} 
-- Certificate request agent
-- Needs authorized signature
-- Needs manager approval
-- Owner is low priv user
-- Owner can be controlled by current user
-- Lowpriv SID has full control
-- Lowpriv SID can write DACLs
-- Lowpriv SID can change Owner
-- Lowpriv SID can write property
-- Current user can write DACLs
-- Current user can change Owner
-- Current user can write property
-- Current user has full control
+#### rootcas
+Lists every certificate in the **AIA / Root CA** container (`Root CAs` published in the configuration NC).
 
 ##### Parameters
-
-- **cmd** (optional): This parameter allows the user to specify the command type. Setting this to `vuln` will filter and display only those certificate templates that are potentially vulnerable. If no parameters are used, the command will list all certificate templates available within the directory.
-- **username** (optional): Use this parameter to search certificate templates based on specific user permissions. It will return templates where the specified user has permissions
-#### rootcas
-Lists all root certificate authorities in the domain
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
 
 #### ntcas
-Lists all NT certificate authorities in the domain
+Lists every certificate in the **NTAuth** container — these are the CAs the DC trusts for **client smartcard / PKINIT** authentication.
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
 
 #### aiacas
+Lists every certificate in the **AIA** container.
 
-Lists all Authority Information Access authorities in the domain
-
-{==What can I do with these? is this just info? why would I want to know them?==}
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
 
 #### enrollmentservices
-Lists all enrollment services. This can be helpful in identifying if there are services with Certificate Web Enrollment enabled. You can check this by browsing to the host the CA service is running on to `http(s)://%ADCSServer%/certsrv/certfnsh.asp`. If web enrollment is enabled you can abuse ESC8 with ntlmrelayx and coercion.  
-
-More information on that can be found [here](https://dirkjanm.io/ntlm-relaying-to-ad-certificate-services/).
-
-#### addcerttemplatenameflagaltname
-Modifies the msPKI-Certificate-Name-Flag value of the specified certificate template and enables ENROLLEE_SUPPLIES_SUBJECT_ALT_NAME bit. If 'flags' is present then it will assign that value.
-
-{==error==}
-
-```
-invalidAttributeSyntax" Reason: "b'00000057: LdapErr: DSID-0C090FC7, comment: Error in attribute conversion operation
-```
+Lists every AD CS enrollment service (CA) registered in the configuration NC — name, DNS hostname, supported templates, and CA flags. Each CA is added to the OctoPwn Targets registry so it can be used by other clients (e.g. the certificate-enrollment HTTP/RPC tools).
 
 ##### Parameters
-- **certtemplatename**: Name of the certificate template
-- **flags**: {==??? what ==}
-#### addenrollmentright
-Grants enrollment rights to a user (by DN) for the specified certificate template. Use this if you have permissions to write properties, but don't have enrollment rights yet. 
-
-##### Parameters
-- **certtemplatename**: The name of the certificate template to which you whish to add enrollment rights to. Example: `MyEnrollmentAgent`
-- **user_dn**: The distinguished name (DN) of the user or group you want to add enrollment rights for on the specified template. Example: `CN=tyron.lannister,OU=Westerlands,DC=sevenkingdoms,DC=local`
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
 
 #### certtemplates
-Lists all certificate templates with attributes their attributes. This does not check for specifically vulnerable templates.  
+Lists every certificate template, with its full security descriptor (resolved against a SID lookup table) and which enrollment service(s) publish it. Pushes the result to the GUI as `CERTTEMPLATES` so the Objects tab can render it.
 
-##### Parameter
-- **name** (optional): The name of a specific certificate template you want to view, if you already know the name. If you do not enter anything, all templates will be shown.  
+##### Parameters
+- **name** *(optional, str)*: Limit to a single template by name.
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### certify
+Identifies vulnerable certificate templates using the original `is_vulnerable` heuristic. For every vulnerable template prints the reason. If `username` is supplied, the user's `tokenGroups` are used to filter matches to templates *that user* can interact with.
+
+##### Parameters
+- **username** *(optional, str)*: sAMAccountName of the user to check. Default: the bound principal.
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### certify2
+Updated Certify-style vulnerability check that uses the more recent `is_vulnerable2` analysis (per-vulnerability findings with `Reason` strings, ESC1 / ESC2 / ESC3 / ESC4 / ESC6 / ESC7 / ESC9 / ESC10 / ESC11 / ESC13 / ESC15 mapping). Pushes the result to the GUI as `CERTIFY2` for the Objects tab to render. Adds every involved enrollment-service host to the Targets registry.
+
+##### Parameters
+- **username** *(optional, str)*: Override the principal whose `tokenGroups` are used. Default: the bound principal.
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### addcerttemplatenameflagaltname
+Modifies `msPKI-Certificate-Name-Flag` on the named template to enable `ENROLLEE_SUPPLIES_SUBJECT_ALT_NAME` (the **ESC1** abuse primitive). Optionally sets the flag value to a caller-provided integer instead.
+
+##### Parameters
+- **certtemplatename**: Template name.
+- **flags** *(optional, int)*: If provided, set `msPKI-Certificate-Name-Flag` to exactly this value. If omitted, the existing value is OR-ed with `ENROLLEE_SUPPLIES_SUBJECT_ALT_NAME`.
+
+#### addenrollmentright
+Grants enrollment rights (`READ_PROP | WRITE_PROP | CONTROL_ACCESS` over the `Certificate-Enrollment` extended-right GUID) on the named template to the user identified by DN.
+
+##### Parameters
+- **certtemplatename**: Template name.
+- **user_dn**: DN of the principal being granted enrollment rights.
+
+---
 
 ### DELEGATION
+
 #### unconstrained
-Identifies all Active Directory objects configured with unconstrained delegation by searching for those marked with the TRUSTED_FOR_DELEGATION flag. For more details on unconstrained delegation, visit: [Unconstrained Delegation - The Hacker Recipes](https://www.thehacker.recipes/ad/movement/kerberos/delegations/unconstrained).
+Lists machines and users with **unconstrained delegation** set (`TRUSTED_FOR_DELEGATION`).
 
 #### constrained
-Identifies Active Directory service accounts configured with constrained delegation, allowing them to impersonate users (except those protected against delegation) to access specified services. This command helps audit which services can potentially be accessed via delegation. Note that users flagged as "is sensitive and cannot be delegated" or members of the "Protected Users" group are immune to such delegation attempts, except for the native Administrator account (RID 500), which remains vulnerable even if added to the Protected Users group. For more insights on constrained delegation, you can check [here](
-https://www.thehacker.recipes/ad/movement/kerberos/delegations/constrained).
+Lists every object with **constrained delegation** set — for each one prints `<sAMAccountName> -> <SPN>` for every entry in `msDS-AllowedToDelegateTo`.
 
 #### s4u2proxy
+Lists every object set up for **S4U2Proxy** (the protocol-transition variant of constrained delegation — `TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION`).
 
-Lists all s4u2proxy objects.
-
-{==What are s4u2proxy objects?==}
-
+---
 
 ### DNS
-#### dnszones
-Lists all dns zones
 
-{==Doesn't seem to list anything==}
+The DNS commands operate against **AD-integrated DNS** (the records stored in the `MicrosoftDNS` directory partition). Everything except `dnsdump` accepts the same `forest` / `legacy` flags that decide which copy of the zone to talk to.
+
+#### dnszones
+Lists every DNS zone known to AD-integrated DNS. For each zone prints the name plus its full property block (allow-update flag, secondary servers, etc.).
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### dnsunsecure
+Detects zones that allow **non-secure dynamic updates** (`DnsZoneAllowUpdate = 1`) — a primitive for unauthenticated DNS-record injection. Also reports zones that are secure-only (`= 2`) and zones with updates disabled (`= 0`).
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
 
 #### dnsdump
-Fetches all DNS entries when the `zone` parameter is empty and stores them in a .tsv file. In case the `zone` parameter is set it will only fetch DNS entries for that gibven zone.
+Enumerates every record in every zone (or in a single zone if `zone` is supplied) and writes them as TSV (`<zone-dn>\t<name>\t<rrtype>\t<formatted-data>`) to `dns_<ts>.tsv` in the OctoPwn working directory.
 
-{==Exception==}
-```
-dnsdump zone=sevenkingdoms.local
-Error:  Exception: unknown address family 10
-Traceback:   File "./octopwn/clients/ldap/console.py", line 1344, in do_dnsdump
-Traceback: 
-Traceback:   File "/lib/python3.11/site-packages/msldap/wintypes/dnsp/strcutures.py", line 91, in get_formatted
-Traceback:     return MSLDAP_DNS_TYPE_TO_CLASS[self.Type].from_bytes(self.Data)
-Traceback:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Traceback: 
-Traceback:   File "/lib/python3.11/site-packages/msldap/wintypes/dnsp/strcutures.py", line 154, in from_bytes
-Traceback:     return DNS_RPC_RECORD_AAAA.from_buffer(io.BytesIO(data))
-Traceback:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Traceback: 
-Traceback:   File "/lib/python3.11/site-packages/msldap/wintypes/dnsp/strcutures.py", line 159, in from_buffer
-Traceback:     res.IpAddress = socket.inet_ntop(socket.AF_INET6, buff.read(16))
-Traceback:                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-```
+##### Parameters
+- **zone** *(optional, str)*: Limit to a single zone. Default: dump all zones.
+
+#### dnsquery
+Queries the records of a single name in a single zone.
+
+##### Parameters
+- **target**: The record name to query.
+- **zone** *(optional, str)*: Zone name. Default: derived from settings.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy `DC=DomainDnsZones,…` replica.
+
+#### dnsqueryall
+Same as `dnsquery` but enumerates every record in the zone.
+
+##### Parameters
+- **zone** *(optional, str)*: Zone name.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy replica.
+
+#### dnsadd
+Creates a new A record. The change can take minutes to take effect because it has to replicate.
+
+##### Parameters
+- **target**: Record name.
+- **ip**: IPv4 address.
+- **zone** *(optional, str)*: Zone name. Default: derived from settings.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy replica.
+
+#### dnsremove
+**Tombstones** an existing A record (sets the tombstone bit, the record disappears at next scavenging).
+
+##### Parameters
+- **target**: Record name.
+- **ip**: IPv4 address being removed.
+- **zone** *(optional, str)*: Zone name.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy replica.
+
+#### dnsdelete
+**Hard-deletes** the directory object backing the record (vs. tombstoning).
+
+##### Parameters
+- **target**: Record name.
+- **zone** *(optional, str)*: Zone name.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy replica.
+
+#### dnsmodify
+Replaces the IP for an existing record.
+
+##### Parameters
+- **target**: Record name.
+- **ip**: New IPv4 address.
+- **zone** *(optional, str)*: Zone name.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy replica.
+
+#### dnsrestore
+Restores a previously-tombstoned record.
+
+##### Parameters
+- **target**: Record name.
+- **zone** *(optional, str)*: Zone name.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy replica.
+
+#### dnsgetserial
+Returns the SOA serial number of a zone.
+
+##### Parameters
+- **zone** *(optional, str)*: Zone name.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy replica.
+
+---
+
+### DMSA
+
+Delegated Managed Service Accounts (Server 2025) and the related "Bad Successor" abuse primitive.
+
+#### dmsas
+Lists every Delegated Managed Service Account (`(objectClass=msDS-DelegatedManagedServiceAccount)`).
+
+#### badsuccessor_check
+Checks for the **Bad Successor** primitive — a Server 2025 OU-level attack where any user with `GenericAll` / `GenericWrite` / `WriteOwner` / `WriteDacl` / `CreateChild` / `WriteProperty` / `ControlAccess` on an OU can create a dMSA and convince the KDC to issue tickets impersonating any user in the domain. Iterates every OU's DACL, filters out well-known privileged SIDs, and reports any non-privileged principal that can abuse the OU. Also lists every Server 2025 DC found in the domain (so you know whether the prerequisite is met).
+
+#### dmsaaddmanagedaccountprecededbylink
+Sets the `msDS-ManagedAccountPrecededByLink` attribute on a DMSA — a building block for the Bad Successor exploitation chain.
+
+##### Parameters
+- **dn**: DN of the DMSA.
+- **managedaccountprecededbylink**: Replacement DN string.
+
+#### dmsasetdelegatedmsastate
+Sets the `msDS-DelegatedMSAState` attribute on a DMSA.
+
+##### Parameters
+- **dn**: DN of the DMSA.
+- **delegatedmsastate**: Integer state value.
+
+#### create_broken_dmsa_user
+Creates a "broken" DMSA service user that, in conjunction with the Bad Successor primitive, can be used to escalate privileges. Do not use outside of an authorised engagement.
+
+##### Parameters
+- **user_dn**: DN where the DMSA object will be created.
+- **computersid**: SID of the computer to associate the DMSA with.
+
+---
+
+### ANALYSIS
+
+#### vulncheck
+**Enterprise-only.** Runs the full registered LDAP-vulnerability check suite (`octopwn.enterprise.ldap_checks.base.CheckRegistry`) against the current connection. Each check produces zero or more `LDAPVulnerability` issues; results are pushed to the GUI as `LDAP_VULNERABILITY` so the **Vulns** tab can render them with severity, affected objects, and remediation hints. Returns the JSON-serialised list of issues. The check suite covers the standard AD-misconfig surface (PKI / ESC chains, LAPS, weak password policy, dangerous ACLs, signed-binding policy, unconstrained delegation, certificate templates, AD CS web enrollment, …).
+
+##### Parameters
+- **to_print** *(optional, bool, default `True`)*: Whether to also print every issue to the console.
+
+---
+
+## Additional commands
+
+These are callable from the console but do not appear in the `help` output. Most are helpers that other commands call internally; a few are fully usable on their own.
+
+#### users / machines / groups
+Bulk fetchers that populate the session's local DB and stream results to the GUI's **Objects** tab. Each one streams in 1000-object chunks. If the DB already has data, the cached version is replayed unless `overwrite=True`.
+
+##### Parameters (`users`, `machines`)
+- **overwrite** *(optional, bool, default `False`)*: Re-fetch from the server even if the DB is populated.
+- **fetch_token_groups** *(optional, bool, default `True`)*: Also fetch each object's `tokenGroups` (slower but lets [`privcheckall`](#privcheckall) work without further LDAP queries).
+
+##### Parameters (`groups`)
+- **overwrite** *(optional, bool, default `False`)*: Re-fetch even if the DB is populated.
+
+#### privcheckall
+Runs [`privcheck`](#privcheck) over every object of the named storage type in the local DB (default `USERS`, also `MACHINES`). Uses cached `tokenGroups` so it is much faster than a live-LDAP scan. Results are themselves cached as `PRIVCHECKALL_<key>` for future fast lookups.
+
+##### Parameters
+- **key** *(optional, str, default `USERS`)*: Storage type to scan.
+- **force** *(optional, bool, default `False`)*: Re-run even if the cache is populated.
+- **to_print** *(optional, bool, default `True`)*: Whether to print results.
+
+#### buildprivgroups
+Builds the cache of privileged-group SIDs used by `privcheck` / `privcheckall`. Combines well-known SIDs (`S-1-5-32-544/548/549/550/551/552`), domain-relative RIDs (`<domain-sid>-512/517/518/519/526/527`), and named groups (`DnsAdmins`, `Certificate Operators`). Persisted in the session DB as `PRIVGROUP`.
+
+##### Parameters
+- **force** *(optional, bool, default `False`)*: Re-build even if the cache is populated.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the table.
+
+#### lookupobj
+Looks up an object in the local DB by credential ID, SID, DN, or sAMAccountName. The storage type is the second positional argument.
+
+##### Parameters
+- **cid_dn_sid_sam**: Identifier.
+- **key**: Storage type — `USERS`, `MACHINES`, `GROUPS`, etc.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the matched object.
+
+#### resolvebasic
+Returns a `{sAMAccountName, objectSid, distinguishedName}` triple for the given identifier (credential ID / SID / DN / sAMAccountName).
+
+##### Parameters
+- **cid_dn_sid_sam**: Identifier.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the result.
+
+#### bindtree
+Changes the tree (search base) used by `MSLDAPClient` for subsequent calls. **Dangerous** — switching to a tree outside the bound domain triggers a referral chase that can leak credentials to the wrong server.
+
+##### Parameters
+- **newtree**: New base DN (e.g. `DC=test,DC=corp`).
+
+#### domains
+Alias for `adinfo(False)` — kept for backwards compatibility.
+
+#### sid2sam
+Same data as [`sidresolv`](#sidresolv) but returns just the `sAMAccountName` (without the `<DOMAIN>\` prefix).
+
+##### Parameters
+- **sid**: SID.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the username.
+
+#### addfullcontrolright
+Grants **`GENERIC_ALL`** to the named user / SID on a target object's DACL (the brute-force version of [`add_genericwrite`](#add_genericwrite)).
+
+##### Parameters
+- **target_dn**: DN of the object being modified.
+- **user_dn_or_sid**: DN or SID of the principal.
+
+#### restoreallowedtoactonbehalfofotheridentity
+Cleanup helper for [`addallowedtoactonbehalfofotheridentity`](#addallowedtoactonbehalfofotheridentity). Restores the original `msDS-AllowedToActOnBehalfOfOtherIdentity` blob (passed as a hex string), or removes the attribute entirely when `original_sd` is omitted / empty.
+
+##### Parameters
+- **target_dn**: DN of the target.
+- **original_sd** *(optional, str)*: Hex-encoded original SD blob (as returned by the original add command). Omit to delete the attribute.
+
+#### setkeycredentiallink
+Replaces the `msDS-KeyCredentialLink` attribute on a target object — the lower-level building block behind [`shadowcred`](#shadowcred).
+
+##### Parameters
+- **targetdn**: DN of the target.
+- **keycredentiallink** *(optional, list)*: List of credential link strings. Pass an empty list (or omit) to clear the attribute.
+
+#### shadowcred
+The full **Shadow Credentials** attack: generates a self-signed certificate, packages it into a Key Credential Link, appends it to the target user's `msDS-KeyCredentialLink`, exports the matching PFX (password: `admin`), and stores it in the OctoPwn credential store as a `pfxb64` credential — usable directly with the [Kerberos client](./kerberos.md)'s `pfxb64` PKINIT auth or with this client's [`SSL`](#ssl-client-certificate-via-tls-or-starttls) auth. Returns the original Key Credential list so you can restore it later via [`setkeycredentiallink`](#setkeycredentiallink).
+
+##### Parameters
+- **targetuser**: sAMAccountName of the target user.
+
+#### dnsquerya
+Resolves an FQDN to its A record(s) via AD-integrated DNS. Used internally by every command that needs to resolve a hostname (`targetenum --ldapresolve`, `dclist`, `entraid`, `sccm`, …).
+
+##### Parameters
+- **fqdn**: FQDN to resolve.
+- **to_print** *(optional, bool, default `True`)*: Whether to print the addresses.
+
+#### dnsprobe
+Auto-detects the AD-integrated DNS layout (forest-wide vs. domain-wide, modern vs. legacy partition) by trying every combination against a known FQDN. Caches the result on the session — future DNS commands (`dnsquerya`, `dnsadd`, …) reuse the cache.
+
+##### Parameters
+- **hostname**: A known-good FQDN to probe with.
+
+#### dnssoa
+Prints the SOA record of a zone.
+
+##### Parameters
+- **zone** *(optional, str)*: Zone name.
+- **forest** *(optional, bool, default `False`)*: Use the forest-wide replica.
+- **legacy** *(optional, bool, default `False`)*: Use the legacy replica.
+
+#### subnets
+Fetches every machine account's IP via AD-integrated DNS, then groups the IPs into realistic CIDR ranges using a proximity heuristic (max gap and minimum prefix tunable). Useful as a quick "what subnets exist in this domain?" answer when there is no Sites & Services data.
+
+##### Parameters
+- **max_gap** *(optional, int, default `256`)*: Maximum gap between consecutive IPs to keep them in the same subnet (default `256` ⇒ effectively `/24`).
+- **min_prefix** *(optional, int, default `16`)*: Minimum prefix length allowed (no `/8` results).
+
+#### test_login
+Helper used by [`usercredsllm`](#usercredsllm) — performs a one-shot LDAP NTLM bind with the given username/password (or NT hash) against the same target as the current session and returns success/failure. You probably want the [`sshlogin`](../scanners/sshlogin.md) / SMB equivalents in the **Scanners** category for actual credential-spraying.
+
+##### Parameters
+- **username**: sAMAccountName.
+- **password**: Cleartext password — or a 32-character hex string (auto-detected as an NT hash).
+
+---
+
+## Limitations
+
+- **Pick the right `atype`.** `SIMPLE` is for OpenLDAP / 389 DS / non-MS LDAP; `NTLM` / `KERBEROS` is for AD; `SSL` is the cert-based path. The most common reason for a failed bind is mixing them up — see the [tip table](#authentication) above.
+- **No Global Catalog transport (yet).** Use `query` with `basedn` for cross-domain searches in the same forest, or open a separate session against `<dc-host>:3268`.
+- **`SIMPLE` over `LDAP` (389) is cleartext.** Use `LDAPS` (636) or `SSL`-over-`LDAP` (StartTLS) when you do not own the wire.
+- **`vulncheck` is Enterprise-only.** The `octopwn.enterprise.ldap_checks` module is not bundled with the community / WASM-pro distribution; the command will fail to import on those builds.
+- **`bloodhound` writes a ZIP to `work_dir`.** Make sure your working directory has space (large domains can produce hundreds of MB).
+- **DNS commands need the right `forest` / `legacy` setting.** Use [`dnsprobe`](#dnsprobe) once at the start of a session against a known FQDN — every subsequent DNS command will reuse the cached settings.
+- **`changeuserpw` raises `constraintViolation` on policy violations.** The exception is caught and a friendly explanation is printed (history, complexity, missing old password, lockout). Read it.
+- **`newlaps` does not decrypt encrypted blobs.** `msLAPS-EncryptedPassword` and friends are printed in hex; decryption requires DPAPI keys and is out of scope for this command.
+- **`bindtree` to a foreign domain leaks credentials.** Switching the search base to a DN outside the bound domain triggers a referral chase. Only do this with a credential you do not mind leaking.
+- **`fulldump` / `dump` write to disk in `work_dir`.** They do not stream — make sure the working directory has space.
+- **`dnsadd` / `dnsmodify` / `dnsremove` take minutes to propagate.** AD replication, not OctoPwn — be patient before assuming the call failed.
+- **Many commands take a DN and refuse anything else.** When in doubt, resolve with [`sam2dn`](#sam2dn) / [`sid2dn`](#sid2dn) first.

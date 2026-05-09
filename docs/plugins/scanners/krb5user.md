@@ -4,6 +4,13 @@ The **KRB5User Scanner** in OctoPwn performs user enumeration against Kerberos a
 
 Use the `usernamefiles` or `usernames` parameters to identify valid accounts within a Kerberos environment. Valid accounts can be used for further attacks, such as password spraying.
 
+!!! tip "What to do with the validated user list"
+    Once you have a confirmed list of valid principals, the [Kerberos client](../clients/kerberos.md)
+    is the natural next stop. From there you can run `asreproast` against accounts that don't
+    require pre-authentication, `kerberoast` for SPN-bearing accounts, request TGTs / TGSs,
+    and exercise S4U / `dmsa` / `cve202233679` flows where applicable — all using the same
+    realm/KDC target you already configured here.
+
 ---
 
 ## Parameters

@@ -1,12 +1,18 @@
-# SMB PrintNightmare Scanner (smbprintnightmare)
+# SMB PowerShell History Scanner (smbpshistory)
 
-The **SMB PrintNightmare Scanner** in OctoPwn scans for hosts vulnerable to the PrintNightmare exploit. **PrintNightmare** refers to a set of vulnerabilities in the Windows Print Spooler service that allow remote code execution and privilege escalation. These vulnerabilities exploit improperly configured permissions in the Print Spooler service, enabling attackers to add malicious printer drivers to execute arbitrary code on the target system.
+The **SMB PowerShell History Scanner** retrieves the **PSReadline** command history files from every user profile on each target host via SMB (port 445). Windows stores every command typed in a PowerShell console in a plaintext file:
 
-PrintNightmare vulnerabilities are not only useful for remote or local privilege escalation but can also facilitate **unconstrained delegation attacks**. Unconstrained delegation allows attackers to retrieve Ticket Granting Tickets (TGTs) of users or systems interacting with the vulnerable machine, potentially including high-privileged accounts such as domain administrators or domain controllers.
+```
+%APPDATA%\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt
+```
 
-Using PrintNightmare you can exploit systems with unconstrained delegation enabled. By coercing authentication from domain controllers or other servers, you can retrieve TGTs. These tickets can then be abused using techniques such as [S4U2Self](../clients/kerberos.md#s4uself) to impersonate accounts for further attacks.
+The scanner walks the user profile directories on each target and downloads these files for each user it can read. Each result row contains the target IP, the username whose history was retrieved, the full file path on the remote host and the file contents.
 
-For detailed technical information, visit [The Hacker Recipes](https://www.thehacker.recipes/ad/movement/print-spooler-service/printnightmare).
+These history files are a goldmine during post-exploitation: they frequently contain plaintext passwords passed as command-line arguments (`-Password Pa$$w0rd`), internal URLs, database connection strings, service account names, helpful one-liner scripts that reveal what the host is used for, and AD group / server names that map out further pivoting opportunities. Always review them carefully for credential material and operational intelligence.
+
+!!! tip "Combine with other secret-mining scanners"
+    - [event6secrets](event6secrets.md) — credentials embedded in Windows Event Log entries.
+    - [smbregsession](smbregsession.md) — local user SIDs from the registry.
 
 ---
 
@@ -15,7 +21,8 @@ For detailed technical information, visit [The Hacker Recipes](https://www.theha
 ### Normal Parameters
 
 #### credential
-Specifies the ID of the credential to use for authentication.
+Specifies the ID of the credential to use for authentication. Local-admin or backup-operator privileges are typically required to read other users' profile directories.
+
 Enter the ID of the credential stored in the Credentials Window.
 
 #### targets
@@ -42,8 +49,10 @@ A list of targets can be specified in the following formats:
 Specifies the authentication protocol.
 
 Available protocols:
+
 - `NTLM`
 - `Kerberos`
+
 #### dialect
 Specifies the SMB connection dialect. Fixed to `SMB2` for this scanner.
 
@@ -51,12 +60,12 @@ Specifies the SMB connection dialect. Fixed to `SMB2` for this scanner.
 Specifies the Kerberos encryption types to use during the scan.
 
 Provide a comma-separated list of encryption types (e.g., `23,17,18`).
+
 #### krbrealm
 Specifies the Kerberos realm to use.
 
-Enter the Kerberos realm (domain name) for authentication.
 #### maxruntime
-Specifies the maximum runtime for the scanner.
+Specifies the maximum runtime per host (in seconds). Set to `-1` to disable.
 
 #### proxy
 Specifies the proxy ID to use for the scan.
@@ -72,7 +81,13 @@ The file will be saved in OctoPwn’s `/browserefs/volatile` directory.
 Determines whether errors encountered during the scan should be displayed.
 
 #### timeout
-Sets the timeout (in seconds) for each target.
+Sets the timeout (in seconds) for each connection attempt.
+
+#### triggerports
+Ports which trigger an automated `smbpshistory` scan when discovered by other scanners. Pre-populated with `445/TCP`.
 
 #### workercount
 Specifies the number of parallel workers for the scan.
+
+#### wsnetreuse
+Internal parameter. Do not modify.

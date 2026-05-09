@@ -1,12 +1,15 @@
-# SMB PrintNightmare Scanner (smbprintnightmare)
+# SMB WebDAV Detection Scanner (smbwebdav)
 
-The **SMB PrintNightmare Scanner** in OctoPwn scans for hosts vulnerable to the PrintNightmare exploit. **PrintNightmare** refers to a set of vulnerabilities in the Windows Print Spooler service that allow remote code execution and privilege escalation. These vulnerabilities exploit improperly configured permissions in the Print Spooler service, enabling attackers to add malicious printer drivers to execute arbitrary code on the target system.
+The **SMB WebDAV Detection Scanner** detects whether the **WebClient** (WebDAV) service is running on each target host by probing over SMB (port 445). It returns a single boolean `AVAILABLE` per host.
 
-PrintNightmare vulnerabilities are not only useful for remote or local privilege escalation but can also facilitate **unconstrained delegation attacks**. Unconstrained delegation allows attackers to retrieve Ticket Granting Tickets (TGTs) of users or systems interacting with the vulnerable machine, potentially including high-privileged accounts such as domain administrators or domain controllers.
+A machine with the WebClient service active is a high-value target for **NTLM relay** attacks. When WebDAV is enabled the host will follow UNC paths over **HTTP**, which means an attacker on the same network can coerce NTLM authentication without requiring SMB signing on the relay path. This pairs naturally with authentication-coercion techniques (PetitPotam, PrinterBug, …) to relay credentials to LDAP, AD CS or other services where signing is not enforced — frequently leading to domain compromise.
 
-Using PrintNightmare you can exploit systems with unconstrained delegation enabled. By coercing authentication from domain controllers or other servers, you can retrieve TGTs. These tickets can then be abused using techniques such as [S4U2Self](../clients/kerberos.md#s4uself) to impersonate accounts for further attacks.
+Finding WebDAV-enabled hosts is a standard step in any internal assessment that focuses on NTLM relay paths.
 
-For detailed technical information, visit [The Hacker Recipes](https://www.thehacker.recipes/ad/movement/print-spooler-service/printnightmare).
+!!! tip "Combine with the other relay-path scanners"
+    - [smbspooler](smbspooler.md) — Print Spooler reachable? Solid coercion vector.
+    - [ntlmreflection](ntlmreflection.md) — vulnerable to relay-back-to-self?
+    - The relay server (under Servers → relay) — the actual relay target / sink.
 
 ---
 
@@ -16,7 +19,8 @@ For detailed technical information, visit [The Hacker Recipes](https://www.theha
 
 #### credential
 Specifies the ID of the credential to use for authentication.
-Enter the ID of the credential stored in the Credentials Window.
+
+Enter the ID of the credential stored in the Credentials Window. A standard domain user is sufficient.
 
 #### targets
 Specifies the targets to scan.
@@ -42,8 +46,10 @@ A list of targets can be specified in the following formats:
 Specifies the authentication protocol.
 
 Available protocols:
+
 - `NTLM`
 - `Kerberos`
+
 #### dialect
 Specifies the SMB connection dialect. Fixed to `SMB2` for this scanner.
 
@@ -51,12 +57,12 @@ Specifies the SMB connection dialect. Fixed to `SMB2` for this scanner.
 Specifies the Kerberos encryption types to use during the scan.
 
 Provide a comma-separated list of encryption types (e.g., `23,17,18`).
+
 #### krbrealm
 Specifies the Kerberos realm to use.
 
-Enter the Kerberos realm (domain name) for authentication.
 #### maxruntime
-Specifies the maximum runtime for the scanner.
+Specifies the maximum runtime per host (in seconds). Set to `-1` to disable.
 
 #### proxy
 Specifies the proxy ID to use for the scan.
@@ -72,7 +78,13 @@ The file will be saved in OctoPwn’s `/browserefs/volatile` directory.
 Determines whether errors encountered during the scan should be displayed.
 
 #### timeout
-Sets the timeout (in seconds) for each target.
+Sets the timeout (in seconds) for each connection attempt.
+
+#### triggerports
+Ports which trigger an automated `smbwebdav` scan when discovered by other scanners. Pre-populated with `445/TCP`.
 
 #### workercount
 Specifies the number of parallel workers for the scan.
+
+#### wsnetreuse
+Internal parameter. Do not modify.

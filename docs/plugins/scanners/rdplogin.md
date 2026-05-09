@@ -2,6 +2,13 @@
 
 The **RDP Login Scanner** in OctoPwn tests whether specified user credentials can successfully authenticate to a target system via Remote Desktop Protocol (RDP). This scanner helps identify systems that acquired credentials can log in to via RDP for potential further lateral movement.
 
+!!! tip "Authentication"
+    This scanner uses the same authentication surface as the [RDP client](../clients/rdp.md#authentication).
+    Use `PLAIN` for local accounts and standalone Windows logins, `NTLM` / `KERBEROS` for
+    domain accounts, and combine `NTLM` + an NT-hash credential against hosts that allow
+    RestrictedAdmin (often surfaced by [rdpcap](rdpcap.md)). The client doc has the full
+    secret-type / CredSSP breakdown.
+
 ---
 
 ## Parameters
@@ -34,12 +41,13 @@ A list of targets can be specified in the following formats:
 ### Advanced Parameters
 
 #### authtype
-Specifies the authentication protocol.
+Specifies the authentication protocol. See the [RDP client authentication](../clients/rdp.md#authentication) section for the full breakdown of which secret types each `authtype` accepts.
 
 Available protocols:
 
-- `NTLM`
-- `Kerberos`
+- `PLAIN` — local / standalone Windows accounts and any RDP server that accepts cleartext.
+- `NTLM` — Windows / domain accounts (also the path for NT-hash + RestrictedAdmin).
+- `KERBEROS` — Windows / domain accounts.
 
 #### dialect
 Specifies the connection dialect.

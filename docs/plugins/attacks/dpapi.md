@@ -59,10 +59,6 @@ A list of targets can be specified in the following formats:
 
 ### Advanced Parameters
 
-#### __info
-This parameter is just for information purposes.
-#### __resultHeaders
-Specifies the headers for the results output. Do not alter.
 #### authtype
 Specifies the authentication protocol to use (e.g., NTLM).
 

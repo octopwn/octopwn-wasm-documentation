@@ -29,21 +29,6 @@ A list of targets can be specified in the following formats:
 
 ---
 ### Advanced Parameters
-#### __info
-
-This parameter is just for information purposes.
-#### __resultHeaders
-
-A comma-separated list of result headers for the output. These include:
-
-- **Authentication capabilities** (e.g., MD5, password-based, null-user).
-- **Connection information** (e.g., IPMI versions supported).
-- **OEM-specific data**.
-
-By default the resultHeaders are: 
-```
-ipmi_tgt_address,ipmi_tgt_lun,ipmi_header_checksum,ipmi_src_address,ipmi_src_lun,ipmi_command,ipmi_completion_code,ipmi_channel,ipmi_compat_20,ipmi_compat_reserved1,ipmi_compat_oem_auth,ipmi_compat_password,ipmi_compat_reserved2,ipmi_compat_md5,ipmi_compat_md2,ipmi_compat_none,ipmi_user_reserved1,ipmi_user_kg,ipmi_user_disable_message_auth,ipmi_user_disable_user_auth,ipmi_user_non_null,ipmi_user_null,ipmi_user_anonymous,ipmi_conn_reserved1,ipmi_conn_20,ipmi_conn_15,ipmi_oem_id,ipmi_oem_data
-```
 
 #### maxruntime
 

@@ -10,9 +10,21 @@ LDAP relaying is an attack technique where a malicious actor intercepts and rela
 
  **High-Level Example of LDAP Relaying**
  
-1. **Intercept NTLM Authentication**: An attacker captures NTLM hashes using coercion tools (e.g. [printerbug](../clients/smb.html#ntlm-coercion)) or other methods.
+1. **Intercept NTLM Authentication**: An attacker captures NTLM hashes using coercion tools (e.g. [printerbug](../clients/smb.md#ntlm-coercion)) or other methods.
 2. **Relay to LDAP**: The captured hashes are relayed to an LDAP server without signing enforcement.
 3. **Modify Directory Objects**: The attacker performs unauthorized operations, such as enabling delegation on a machine account, or granting higher privileges to their controlled user.
+
+!!! tip "Authentication"
+    The UI exposes the standard `authtype` field (`NTLM`, `KERBEROS`, `SIMPLE`, `SSL`),
+    but **this scanner always binds with NTLM** — the signing/channel-binding probe is
+    hardcoded to `asyauthProtocol.NTLM` in the executor because the test only makes sense
+    against an NTLM-capable bind. The `authtype` selection here therefore has no effect on
+    the probe; supply any NTLM-compatible credential and the right `authtype` (e.g. `NTLM`)
+    so the credential resolves cleanly.
+
+    For interactive LDAP work — including the full `NTLM` / `KERBEROS` / `SIMPLE` / `SSL`
+    matrix, `LDAPS` vs. `STARTTLS`, and client-certificate authentication — see the
+    [LDAP client authentication](../clients/ldap.md#authentication) section.
 
 ---
 ## Parameters
@@ -42,19 +54,6 @@ A list of targets can be specified in the following formats:
 
 ### Advanced Parameters
 
-#### __info
-This parameter is just for information purposes.
-
-#### __resultHeaders
-Defines the headers for the scan results.
-
-A comma-separated list of result headers for the output, including:
-
-- **LDAP**: Indicates LDAP server availability.
-- **LDAPS**: Indicates LDAPS (LDAP over SSL) availability.
-- **SIGNING_ENFORCED**: Specifies if signing is enforced.
-- **BINDING_ALWAYSCHECK**: Specifies if binding is always checked.
-- **BINDING_WHENSUPPORTED**: Specifies if binding is checked when supported.
 #### authtype
 Specifies the authentication protocol.
 

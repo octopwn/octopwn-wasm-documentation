@@ -33,12 +33,6 @@ A list of targets can be specified in the following formats:
 
 ### Advanced Parameters
 
-#### __info
-This parameter is just for information purposes.
-
-#### __resultHeaders
-Defines the headers for the scan results. This should not be changed.
-
 #### authtype
 Specifies the authentication protocol.
 
