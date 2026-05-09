@@ -50,41 +50,87 @@ nav:
       - 'SMB' : './plugins/clients/smb.md'
       - 'LDAP' : './plugins/clients/ldap.md'
       - 'Kerberos' : './plugins/clients/kerberos.md'
+      - 'MSSQL' : './plugins/clients/mssql.md'
       - 'DCEDRSUAPI' : './plugins/clients/dcedrsuapi.md'
+      - 'FTP' : './plugins/clients/ftp.md'
       - 'NETCAT' : './plugins/clients/netcat.md'
       - 'NFS3' : './plugins/clients/nfs3.md'
       - 'NTP' : './plugins/clients/ntp.md'
       - 'SNMP' : './plugins/clients/snmp.md'
       - 'SSH' : './plugins/clients/ssh.md'
       - 'WinRM' : './plugins/clients/winrm.md'
+      - 'WMI' : './plugins/clients/wmi.md'
       - 'RDP' : './plugins/clients/rdp.md'
   - 'Credential':
       - 'Overview': 'user-guide/credentials.md'
   - 'Target':
       - 'Overview': 'user-guide/target.md'
-  - 'Scanners': 
+  - 'Scanners':
       - 'Overview': './plugins/scanners/index.md'
-      - 'ipmicaps': './plugins/scanners/ipmicaps.md'
-      - 'ipmicipherzero': './plugins/scanners/ipmicipherzero.md'
-      - 'Jackdaw': './plugins/scanners/jackdaw.md'
-      - 'krb5user': './plugins/scanners/krb5user.md'
-      - 'ldapsig': './plugins/scanners/ldapsig.md'
-      - 'nfs3file': './plugins/scanners/nfs3file.md'
-      - 'rdpcap': './plugins/scanners/rdpcap.md'
-      - 'rdplogin': './plugins/scanners/rdplogin.md'
-      - 'rdpscreen' : './plugins/scanners/rdpscreen.md'
-      - 'smbadmin' : './plugins/scanners/smbadmin.md'
-      - 'smbfile': './plugins/scanners/smbfile.md'
-      - 'smbiface': './plugins/scanners/smbiface.md'
-      - 'smblaps': './plugins/scanners/smblaps.md'
-      - 'smbfinger': './plugins/scanners/smbfinger.md'
-      - 'smbprintnightmare': './plugins/scanners/smbprintnightmare.md'
-      - 'smbsig': './plugins/scanners/smbsig.md'
-      - 'smbproto': './plugins/scanners/smbproto.md'
-      - 'smbshare': './plugins/scanners/smbshare.md'
-      - 'smbsession': './plugins/scanners/smbsession.md'
-      - 'snaffler': './plugins/scanners/snaffler.md'
-      - 'portscan': './plugins/scanners/portscan.md'
+      - 'Discovery & inventory':
+          - 'portscan': './plugins/scanners/portscan.md'
+          - 'nmap': './plugins/scanners/nmap.md'
+          - 'baseline': './plugins/scanners/baseline.md'
+      - 'SMB protocol & fingerprinting':
+          - 'smbfinger': './plugins/scanners/smbfinger.md'
+          - 'smbsig': './plugins/scanners/smbsig.md'
+          - 'smbproto': './plugins/scanners/smbproto.md'
+          - 'smbiface': './plugins/scanners/smbiface.md'
+      - 'SMB shares, files & sessions':
+          - 'smbshare': './plugins/scanners/smbshare.md'
+          - 'smbfile': './plugins/scanners/smbfile.md'
+          - 'snaffler': './plugins/scanners/snaffler.md'
+          - 'smbsession': './plugins/scanners/smbsession.md'
+          - 'smbregsession': './plugins/scanners/smbregsession.md'
+      - 'Web reconnaissance':
+          - 'httpheader': './plugins/scanners/httpheader.md'
+          - 'httpfinger': './plugins/scanners/httpfinger.md'
+          - 'webscreenshot': './plugins/scanners/webscreenshot.md'
+          - 'nuclei': './plugins/scanners/nuclei.md'
+      - 'SSH reconnaissance':
+          - 'sshbanner': './plugins/scanners/sshbanner.md'
+          - 'sshinfo': './plugins/scanners/sshinfo.md'
+          - 'sshauth': './plugins/scanners/sshauth.md'
+      - 'Authentication & login':
+          - 'krb5user': './plugins/scanners/krb5user.md'
+          - 'smbadmin': './plugins/scanners/smbadmin.md'
+          - 'smblaps': './plugins/scanners/smblaps.md'
+          - 'smbbrute': './plugins/scanners/smbbrute.md'
+          - 'mssqllogin': './plugins/scanners/mssqllogin.md'
+          - 'mssqladmin': './plugins/scanners/mssqladmin.md'
+          - 'sshlogin': './plugins/scanners/sshlogin.md'
+          - 'ftplogin': './plugins/scanners/ftplogin.md'
+          - 'ftpanon': './plugins/scanners/ftpanon.md'
+          - 'rdplogin': './plugins/scanners/rdplogin.md'
+      - 'RDP':
+          - 'rdpcap': './plugins/scanners/rdpcap.md'
+          - 'rdpscreen': './plugins/scanners/rdpscreen.md'
+      - 'MSSQL data hunting':
+          - 'mssqlfinger': './plugins/scanners/mssqlfinger.md'
+          - 'mssqlpipe': './plugins/scanners/mssqlpipe.md'
+          - 'mssqldbinfo': './plugins/scanners/mssqldbinfo.md'
+          - 'mssqlsensdata': './plugins/scanners/mssqlsensdata.md'
+          - 'mssqlquery': './plugins/scanners/mssqlquery.md'
+      - 'WMI':
+          - 'wmiadmin': './plugins/scanners/wmiadmin.md'
+          - 'wmiquery': './plugins/scanners/wmiquery.md'
+      - 'LDAP & NFS':
+          - 'ldapsig': './plugins/scanners/ldapsig.md'
+          - 'nfs3file': './plugins/scanners/nfs3file.md'
+      - 'SNMP & IPMI':
+          - 'snmphost': './plugins/scanners/snmphost.md'
+          - 'ipmicaps': './plugins/scanners/ipmicaps.md'
+          - 'ipmicipherzero': './plugins/scanners/ipmicipherzero.md'
+      - 'Vulnerability & relay-path':
+          - 'smbprintnightmare': './plugins/scanners/smbprintnightmare.md'
+          - 'smbspooler': './plugins/scanners/smbspooler.md'
+          - 'smbwebdav': './plugins/scanners/smbwebdav.md'
+          - 'ntlmreflection': './plugins/scanners/ntlmreflection.md'
+          - 'ntlmv1': './plugins/scanners/ntlmv1.md'
+          - 'CVE_2017_12542': './plugins/scanners/CVE_2017_12542.md'
+      - 'Post-exploitation secrets':
+          - 'smbpshistory': './plugins/scanners/smbpshistory.md'
+          - 'event6secrets': './plugins/scanners/event6secrets.md'
   - 'Servers': 
       - 'Overview': './plugins/servers/overview.md'
       - 'llmnr': './plugins/servers/llmnr.md'
@@ -115,7 +161,9 @@ nav:
       - 'dpapi': './plugins/attacks/dpapi.md'
       - 'smbregdump': './plugins/attacks/smbregdump.md'
       - 'smbregdump2': './plugins/attacks/smbregdump2.md'
+
       - 'timeroast': './plugins/attacks/timeroast.md'
+  
   - 'Automations':
       - 'autopwn': './plugins/automations/autopwn.md'
 
