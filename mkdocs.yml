@@ -4,6 +4,7 @@ plugins:
     - offline
 theme: 
   name: material
+  custom_dir: overrides
   logo: images/OCTO_Character_Web_64px.svg
   font:
     text: Roboto

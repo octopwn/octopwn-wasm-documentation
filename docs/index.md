@@ -14,7 +14,16 @@ Here you can find all information about all editions of Octopwn:
 
 
 If you need further help, please [write us here](https://octopwn.com/support) or use the support channel on our [Discord](https://discord.gg/7amw5mD37Y).  
-    
+
+## For LLMs &amp; AI agents
+
+OctoPwn ships two plain-text companions of this documentation, following the [llms.txt](https://llmstxt.org/) convention, so AI assistants and search engines can discover and consume the docs without having to crawl every page:
+
+* [`/llms.txt`](https://docs.octopwn.com/llms.txt) — curated, machine-readable index of every documentation page, with a one-line summary per page.
+* [`/llms-full.txt`](https://docs.octopwn.com/llms-full.txt) — the entire documentation site concatenated in nav order (~1&nbsp;MB), suitable for offline question answering or large-context LLMs.
+
+Both files are auto-generated from `mkdocs.yml` on every release.
+
 **Current Octopwn version:** v4.0 (2-April 2026)  
 **Current open beta:** none
 
