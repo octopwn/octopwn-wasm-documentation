@@ -312,7 +312,12 @@ Iterates the chosen module(s) and reports per-statement success / failure. Even 
 - **module** *(optional, str, default `all`)*: One of the module names above, or `all`.
 
 !!! tip "Set up the listener first"
-    Start the [Relay server](../servers/relay.md), [LLMNR](../servers/llmnr.md) / [mDNS](../servers/mdns.md) poisoning, or any responder-style listener on `target` **before** running `coerce`, otherwise the captured authentication will be lost.
+    Start a relay server — typically [`RELAYSMB`](../servers/relaysmb.md) for the
+    SMB-bound auth that `xp_dirtree` & friends produce, or
+    [`RELAYMSSQL`](../servers/relaymssql.md) if you intend to chain to another SQL
+    Server — and/or the [Spoofer](../servers/spoofer.md) (LLMNR / mDNS / NBT-NS
+    poisoning), on `target` **before** running `coerce`, otherwise the captured
+    authentication will be lost.
 
 ---
 

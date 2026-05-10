@@ -18,7 +18,32 @@ These hashes can then be cracked offline using tools like **Hashcat** to recover
 !!! info
     For a detailed explanation of Timeroasting and how to secure against it, see: [Secura Whitepaper on Timeroasting](https://www.secura.com/uploads/whitepapers/Secura-WP-Timeroasting-v3.pdf).
 
-OctoPwn's Timeroast can either target a specific RID Range (the RID is the last part of the SID, e.g. S-1-5-21-2604966440-2990042199-2902315216-**1117**), or brute force all RIDs, but this will be very slow. 
+OctoPwn's Timeroast can either target a specific RID Range (the RID is the last part of the SID, e.g. S-1-5-21-2604966440-2990042199-2902315216-**1117**), or brute force all RIDs, but this will be very slow.
+
+## Output
+
+Each captured hash is stored in the [Credentials Hub](../../user-guide/credentials.md)
+with `stype = sntp-ms`, `source = TimeRoast`, and `secret =
+<rid>:$sntp-ms$<md5hash>$<salt>` — Hashcat mode `31300`. To crack:
+
+```
+hashcat -m 31300 timeroast.hashes wordlist.txt
+```
+
+Cracked computer-account passwords are usable to:
+
+- Forge tickets (Silver / Diamond / Sapphire) with the [Kerberos
+  client](../clients/kerberos.md) once you have rebuilt the AES key from the
+  password.
+- Drop into [`pre2k`](pre2k.md) territory if the passwords match the
+  pre-Windows-2000 pattern (lowercased computer name, no `$`).
+
+## See also
+
+- [Kerberos client](../clients/kerberos.md) — for using the cracked computer-account
+  passwords (TGT request, ticket forging).
+- [`pre2k`](pre2k.md) — companion attack for the same class of weak machine-account
+  passwords, but enumerated via Kerberos pre-auth instead of NTP.
 
 ---
 

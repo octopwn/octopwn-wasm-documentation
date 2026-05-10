@@ -6,7 +6,7 @@ LDAP relaying is an attack technique where a malicious actor intercepts and rela
 
 - Relay intercepted NTLM authentication requests to the LDAP server.
 - Exploit misconfigured systems to escalate privileges or gain unauthorized access.
-- Use tools like **ntlmrelayx** or our [relay server](../servers/relay.md) to abuse LDAP features, such as enabling delegation, modifying ACLs, or escalating permissions for user accounts.
+- Use tools like **ntlmrelayx** or our [LDAP relay server](../servers/relayldap.md) to abuse LDAP features, such as enabling delegation, modifying ACLs, or escalating permissions for user accounts.
 
  **High-Level Example of LDAP Relaying**
  

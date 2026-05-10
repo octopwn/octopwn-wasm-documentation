@@ -1,1 +1,0 @@
-Allows initiation of HTTP request via the proxy to a web service. Only for Development Purposes.

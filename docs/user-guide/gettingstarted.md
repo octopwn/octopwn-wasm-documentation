@@ -72,11 +72,11 @@ OctoPwn consists of three components.
 
 You can find comprehensive information on core functionalities and usage here:
 
-* [Overview of clients](../plugins/clients/overview.html): Clients allow you to interact on a protocol-level with various single services such SMB, LDAP and Kerberos. 
-* [Overview of scanners](../plugins/scanners/index.html): Scanners allow you to scan multiple hosts based on previously defined target groups. You can for example scan for admin priviliges with a specified user, scan for sensitive files across multiple hosts. 
-* [Overview of servers](../plugins/servers/overview.html): Servers allow you to execute attacks that require a server component, such as NTLM Relaying and LLMNR/NBTNS Poisoning. This might require you to open a port on the firewall to receive the connections
-* [Overview of utilities](../plugins/utils/index.html): Utilities allow you to run additional functionality that partly run only in the browser, such as pypykatz for lsass analysis, access a local IDE or run roadtools for cloud pentesting. 
-* [Overview of attacks](../plugins/attacks/overview.html): Attacks allows an easy one-click experience for common attacks, such as Kerberoasting, DCSync, SAM Dump, ...
+* [Overview of clients](../plugins/clients/overview.md): Clients allow you to interact on a protocol-level with various single services such SMB, LDAP and Kerberos. 
+* [Overview of scanners](../plugins/scanners/index.md): Scanners allow you to scan multiple hosts based on previously defined target groups. You can for example scan for admin priviliges with a specified user, scan for sensitive files across multiple hosts. 
+* [Overview of servers](../plugins/servers/overview.md): Servers allow you to execute attacks that require a server component, such as NTLM Relaying and LLMNR/NBTNS Poisoning. This might require you to open a port on the firewall to receive the connections
+* [Overview of utilities](../plugins/utils/index.md): Utilities allow you to run additional functionality that partly run only in the browser, such as pypykatz for lsass analysis, access a local IDE or run roadtools for cloud pentesting. 
+* [Overview of attacks](../plugins/attacks/overview.md): Attacks allows an easy one-click experience for common attacks, such as Kerberoasting, DCSync, SAM Dump, ...
 * Overview of proxies and proxy chains are coming soon: For now, if you want to tunnel your traffic over a proxy, e.g. when using a C2 or want to tunnel your connection over RDP (e.g. with https://github.com/airbus-seclab/soxy), simply add the proxy with ip address and port and choose your proxy id (shown in the Proxies section in the right popout menu) when connecting a client or a scanner. 
 
 ---

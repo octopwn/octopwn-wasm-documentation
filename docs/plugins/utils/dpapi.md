@@ -1,5 +1,16 @@
+# DPAPI Utility
 
-This utility performs DPAPI related functions.  
+This utility performs the **offline-decryption** half of the DPAPI workflow.
+It loads, caches, and decrypts the various Windows DPAPI artefacts —
+master keys, credential / vault files, Chrome stores, WiFi configs,
+PowerShell SecureStrings, CloudAP PRT secrets, and so on.
+
+It is the analytical companion to the
+[**DPAPI attack**](../attacks/dpapi.md) — the attack does the **collection**
+side (SMB-side LSASS dumping, master-key file harvesting, SCCM / WMI Object DB
+extraction, registry hive collection); the utility does the **decryption** side
+on whatever the attack (or any other workflow) handed you. You will frequently
+run them in sequence: attack → utility → cracked credentials in the Hub.
 
 ## Deep-dive
 
@@ -134,8 +145,35 @@ Decrypts .cred files using the exisiting masterkey cache
 
 ### CLOUDAP
 #### cloudapkd
-Decrypts CloudAP PRT secret using the exisiting masterkey cache
+`cloudapkd(prt_full=None)` — decrypts a CloudAP PRT (Primary Refresh Token)
+secret using the cached master keys.
+
+- Called with no argument: walks every `PRT`-typed credential in the Hub
+  and tries to decrypt each one.
+- Called with an integer: looks up that credential ID and decrypts its
+  secret.
+- Called with a string: treated as the inline PRT JSON / hex blob.
+
+The recovered clear key is stored as a `PRT-CLEARKEY` credential in the
+Hub. If the input PRT JSON also contains the raw `Prt` field, that's
+printed too — that's what you feed into the
+[ROADtools utility](roadtools.md) for downstream Azure AD work.
 
 ### SECURESTRING
 #### securestring
-Decrypts Powershell SecureString blob using the exisiting masterkey cache
+Decrypts Powershell SecureString blob using the exisiting masterkey cache.
+Accepts either a hex-encoded blob or a path to a file containing one.
+
+---
+
+## See also
+
+- [**DPAPI attack**](../attacks/dpapi.md) — the collection side. Dumps
+  LSASS, master-key files, SCCM credential vaults, and the WMI Object DB
+  over SMB; everything it produces is consumable by this utility.
+- [Pypykatz utility](pypykatz.md) — the related offline-parser for LSASS
+  minidumps and registry hives. Many master keys end up there first.
+- [ROADtools utility](roadtools.md) — once you've decrypted a CloudAP PRT,
+  feed the `Prt` value into ROADtools for Azure AD reconnaissance.
+- [Credentials Hub](../../user-guide/credentials.md) — where every recovered
+  pre-key, master key, and decrypted secret is cached.

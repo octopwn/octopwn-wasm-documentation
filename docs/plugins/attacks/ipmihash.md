@@ -2,7 +2,13 @@
 
 A significant flaw in the **IPMI 2.0 specification** allows the server (Baseboard Management Controller or BMC) to send a salted SHA1 or MD5 hash of a user's password during the authentication process. This means that for any valid user account, the attacker can request and retrieve the password hash without completing authentication. The extracted hashes can then be subjected to offline brute force or dictionary attacks to recover the plaintext password.
 
-The **ipmihash** attack automates this process, identifying user accounts, retrieving password hashes. Recovered hashes can be exported in formats compatible with tools like **Hashcat**. {==what is the output format, hashcat or john?==}
+The **ipmihash** attack automates this process: it tries the standard set of common
+BMC usernames (`admin`, `administrator`, `root`, `user`, `guest`, …) against every
+target on `623/UDP` and, for any user the BMC acknowledges, captures the
+**RAKP** salted hash. Recovered hashes are stored in the
+[Credentials Hub](../../user-guide/credentials.md) with `stype = ipmi`,
+`source = IPMI` — the secret value is the **Hashcat-7300** format string, ready
+for offline cracking.
 
 ### Hash Extraction Process
 
@@ -11,13 +17,20 @@ The **ipmihash** attack automates this process, identifying user accounts, retri
    - This hash is extracted without the need for successful authentication.
 
 2. **Crack Passwords**:
-   - The retrieved hashes can be cracked offline using tools like **Hashcat**.
-   - Example
-     - **Hashcat**: Use mode `7300` to crack IPMI RAKP hashes.
+   - Hashcat mode `7300` (IPMI2 RAKP HMAC-SHA1).
+
        ```bash
-       ./hashcat-cli64.bin --username -m 7300 out.hashcat -a 3 ?a?a?a?a
+       hashcat --username -m 7300 ipmi.hashes wordlist.txt
        ```
 
+## See also
+
+- [`ipmicaps` scanner](../scanners/ipmicaps.md) — pre-flight check that
+  enumerates which IPMI ciphersuites the target advertises (and whether it accepts
+  the unauthenticated `cipher 0`).
+- [`ipmicipherzero` scanner](../scanners/ipmicipherzero.md) — checks for the
+  `cipher 0` authentication-bypass condition; if positive, you don't even need
+  this attack.
 
 ---
 

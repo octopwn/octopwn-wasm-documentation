@@ -1,42 +1,62 @@
-OctoPwn's **servers** allow hosting services on the local system enabling man-in-the-middle (MitM) attacks and credential harvesting by exploiting network protocols like LLMNR, mDNS, NTLM, and more. These servers can enable you to do poisoning, spoofing, and relaying attacks to capture credentials or escalate privileges in Active Directory environments.
+# Servers — overview
 
-Please note that you will need to open the ports required for these protocols to operate.
+OctoPwn's **servers** host network services from inside the framework so you can run the
+classic "rogue server" attack patterns — name-resolution poisoning, NTLM relaying,
+WebDAV / HTTP loot-drop sinks, AD CS Web Enrollment relays, and more — without having to
+juggle separate Responder / ntlmrelayx / Inveigh deployments.
 
-### Getting Started
+Unlike the equivalent standalone tools, OctoPwn ships these as **separate, focused
+sessions**. The poisoning layer (LLMNR / mDNS / NBT-NS) is one module; each authentication
+collector / relay is its own module. You typically start two or more sessions in
+parallel — one to misdirect victims, one (or several) to handle the resulting authentication.
 
-#### **1. Configure Prerequisites**
+## Where servers run
 
-- **Targets**: Add victim IPs/hostnames to the [Targets Window](https://chat.deepseek.com/a/chat/target.md).
-- **Credentials**: Ensure credentials for spoofing/relaying are stored in the [Credentials Hub](https://chat.deepseek.com/a/chat/credentials.md).
-- **Firewall**: Open ports (e.g., UDP 5355 for LLMNR, TCP 80/443 for Relay).
-#### **2. Start a Server**
+Every server module binds its sockets inside the **OctoPwn agent process**, not in the
+browser. In a typical setup that is:
 
-- **LLMNR/mDNS Server**:
-    
-    - Set `spoof=1` to enable response spoofing.
-        
-    - Use `localip` to define the attacker’s IP.
-        
-    - Captured hashes are saved to `/browserfs/volatile/results.txt`.
-        
-- **Relay Server**:
-    
-    - Specify `ldaptargets` or `httptargets` for relay destinations.
-        
-    - Use `adcstemplate` to request certificates during ADCS relaying.
-        
+- **Pro / WASM mode**: the wsnet agent on whichever native host you are bridging the
+  browser to.
+- **Enterprise mode**: the OctoPwn server process on whichever host it is deployed.
 
-#### **3. Trigger Authentication**
+A purely browser-only deployment (no native bridge) cannot host servers — there is no
+raw-socket access from Emscripten. Each server page calls out the specific platform
+caveats that apply (privileged ports, conflicts with the host's own services, the same
+L2 / multicast segment as the victims, etc.).
 
-- **Coercion Techniques**:
-    
-    - Use `printerbug` (via SMB Client) or host malicious WebDAV shares.
-        
-    - Combine relay with LLMNR/mDNS poisoning to redirect victims.
-        
+## Available servers
 
-#### **4. Analyze Results**
+The currently shipped server modules:
 
-- **Hashes**: Crack captured Net-NTLMv2 hashes with tools like Hashcat.
-    
-- **Certificates**: Use obtained certificates for Kerberos authentication.
+- **[Spoofer](spoofer.md)** — unified LLMNR + mDNS + NBT-NS poisoner. Replaces the
+  legacy single-protocol `LLMNR`, `MDNS` and `NBTNS` servers. Pair it with one or more
+  Relay servers below to capture or relay the resulting authentication.
+- **NTLM relay family** — five focused variants, one page per back-end:
+    - **[RelaySMB](relaysmb.md)** — relay to a list of SMB targets, auto-loot via
+      `regdump` + `dpapisecrets` on success.
+    - **[RelayLDAP](relayldap.md)** — relay to LDAP / LDAPS / StartTLS DCs for ACL
+      writes, RBCD, Shadow Credentials, etc.
+    - **[RelayMSSQL](relaymssql.md)** — relay to MSSQL servers, useful for
+      SQL-coercion chains and service-account abuse.
+    - **[RelayESC8](relayesc8.md)** — relay to AD CS Web Enrollment, output is a
+      ready-to-use PFX certificate.
+    - **[RelayNTLMReflection](relayreflection.md)** — relay back to the source host
+      (the classic CVE-2019-1040-style self-relay path).
+
+Additional server modules — `WSNET` (agent bridge), `HTTPFILE`, `WEBDAV`,
+`REMOTECONTROL`, `REMOTECONTROLJS` — are exposed by the framework and will be documented
+in subsequent passes.
+
+## Typical workflow
+
+1. **Pick the auth-collection server(s)** you want to use, based on what you intend to
+   capture or relay onto. Start them and verify in their consoles that they are listening.
+2. **Get a victim to authenticate to the agent** — either by abusing an existing
+   misconfiguration (writable share with malicious `desktop.ini`, MS-RPRN coercion via
+   the [SMB client's printerbug](../clients/smb.md#ntlm-coercion), AD CS template,
+   crafted email, …) **or** by starting the [Spoofer](spoofer.md) and luring the victim
+   onto the agent's IP.
+3. **Watch the relay-server consoles** for captured / relayed sessions.
+4. **Process the captured material** — Net-NTLMv2 hashes can be cracked offline (Hashcat
+   et al.); machine-account credentials and AD CS certificates are auto-stored in the
+   project's Credentials Hub for use in subsequent client sessions.

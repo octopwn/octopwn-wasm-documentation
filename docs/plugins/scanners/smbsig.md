@@ -2,7 +2,7 @@
 
 The **SMB Signature Scanner** in OctoPwn checks whether SMB signing is enabled and whether it is enforced on target SMB servers. SMB signing ensures the integrity of SMB messages by adding a cryptographic signature to each message. However, if SMB signing is enabled but not enforced, attackers can perform **SMB relaying**.
 
-**SMB Relaying** is an attack that allows adversaries to intercept and relay SMB authentication requests to another target, effectively impersonating the victim. This can be used to gain unauthorized access to resources or escalate privileges within a network. Note that OctoPwn has built-in SMB Relaying capabilities with the [Relaying Server](../servers/relay.html).
+**SMB Relaying** is an attack that allows adversaries to intercept and relay SMB authentication requests to another target, effectively impersonating the victim. This can be used to gain unauthorized access to resources or escalate privileges within a network. Note that OctoPwn has built-in SMB Relaying capabilities — see [`RELAYSMB`](../servers/relaysmb.md) for relays against a target list, and [`RELAYNTLMREFLECTION`](../servers/relayreflection.md) for the back-at-source variant.
 
 !!! tip "After the scan"
     The `SMB`, `SMB2` and `SMB3` protocols selectable in the [SMB client transport](../clients/smb.md#transport)

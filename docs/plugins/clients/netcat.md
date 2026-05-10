@@ -116,7 +116,7 @@ The same applies to any OctoPwn proxy chain (multi-hop, mixed proxy types) — t
 - **No listener mode.** Connections are always outbound. There's no `-l` equivalent — use one of the OctoPwn server modules if you need to receive a callback.
 - **No `-e` / command execution.** Sending bytes to a remote shell still requires the remote side to actually run a shell — Netcat won't bind one for you on either end.
 - **No port forwarding.** This client is purely a single TCP socket. For pivoting *out of* OctoPwn, use the proxy system (e.g. `createsocksproxy` on SSH) and select the proxy for whichever client / scanner needs to ride through it.
-- **No TLS.** The socket is plain TCP. For HTTPS-style targets, fall back to the [HTTP utility](../utils/http.md) or a dedicated client.
+- **No TLS.** The socket is plain TCP. For HTTPS-style targets you'll need a dedicated client outside Netcat — there is currently no generic TLS-wrapped raw-socket client in OctoPwn.
 - **No half-close / shutdown.** You can't `shutdown(SHUT_WR)` to signal end-of-input while keeping the read side open — only `disconnect` (full close) is exposed.
 - **`send` always appends `lineterm`.** If you need to emit a partial line or a payload without a terminator, use `sendhex` (or `sendfile`).
 - **Lineterm escape-sequence gotcha**: see the warning under [`lineterm`](#lineterm) above — `\r\n` typed from the console is taken literally.

@@ -133,39 +133,95 @@ nav:
           - 'event6secrets': './plugins/scanners/event6secrets.md'
   - 'Servers': 
       - 'Overview': './plugins/servers/overview.md'
-      - 'llmnr': './plugins/servers/llmnr.md'
-      - 'mdns': './plugins/servers/mdns.md'
-      - 'relay': './plugins/servers/relay.md'
+      - 'spoofer': './plugins/servers/spoofer.md'
+      - 'relaysmb': './plugins/servers/relaysmb.md'
+      - 'relayldap': './plugins/servers/relayldap.md'
+      - 'relaymssql': './plugins/servers/relaymssql.md'
+      - 'relayesc8': './plugins/servers/relayesc8.md'
+      - 'relayreflection': './plugins/servers/relayreflection.md'
 
 
 
-  - 'Utilities': 
+  - 'Utilities':
       - 'Overview': './plugins/utils/index.md'
-      - 'chat' : './plugins/utils/chat.md'
-      - 'http' : './plugins/utils/http.md'
-      - 'ide' : './plugins/utils/ide.md'
-      - 'neo4j' : './plugins/utils/neo4j.md'
-      - 'python-console' : './plugins/utils/python-console.md'
-      - 'roadtools' : './plugins/utils/roadtools.md'
-      - 'pypykatz' : './plugins/utils/pypykatz.md'
-      - 'dpapi' :  './plugins/utils/dpapi.md'
-      - 'jackdaw': './plugins/utils/jackdaw.md'
-      - 'duckysvc': './plugins/utils/duckysvc.md'
-      - 'masscan': './plugins/utils/masscan.md'
-      - 'nmap': './plugins/utils/nmap.md'
-      - 'pluginloader': './plugins/utils/pluginloader.md'
+      - 'Offline analysis & decryption':
+          - 'pypykatz': './plugins/utils/pypykatz.md'
+          - 'dpapi': './plugins/utils/dpapi.md'
+          - 'nmap': './plugins/utils/nmap.md'
+          - 'masscan': './plugins/utils/masscan.md'
+      - 'AD modelling & exploitation':
+          - 'bloodhound': './plugins/utils/bloodhound.md'
+          - 'neo4j': './plugins/utils/neo4j.md'
+          - 'domain': './plugins/utils/domain.md'
+      - 'Operator helpers':
+          - 'hashcat': './plugins/utils/hashcat.md'
+          - 'snaffler': './plugins/utils/snaffler.md'
+          - 'terminal': './plugins/utils/terminal.md'
+          - 'roadtools': './plugins/utils/roadtools.md'
+          - 'pluginloader': './plugins/utils/pluginloader.md'
+          - 'ide': './plugins/utils/ide.md'
+          - 'python-console': './plugins/utils/python-console.md'
   - 'Attacks':
-      - 'Overview': './plugins/attacks/overview.md' 
-      - 'ipmihash': './plugins/attacks/ipmihash.md'
-      - 'kerberoast': './plugins/attacks/kerberoast.md'
-      - 'dpapi': './plugins/attacks/dpapi.md'
-      - 'smbregdump': './plugins/attacks/smbregdump.md'
-      - 'smbregdump2': './plugins/attacks/smbregdump2.md'
+      - 'Overview': './plugins/attacks/overview.md'
+      - 'AD credentials & secrets':
+          - 'kerberoast': './plugins/attacks/kerberoast.md'
+          - 'dcsync': './plugins/attacks/dcsync.md'
+          - 'adspray': './plugins/attacks/adspray.md'
+          - 'pre2k': './plugins/attacks/pre2k.md'
+          - 'timeroast': './plugins/attacks/timeroast.md'
+      - 'AD CS':
+          - 'esc1': './plugins/attacks/esc1.md'
+          - 'esc4': './plugins/attacks/esc4.md'
+      - 'Kerberos delegation':
+          - 'rbcd': './plugins/attacks/rbcd.md'
+          - 'shadowcreds': './plugins/attacks/shadowcreds.md'
+          - 'constraineddeleg': './plugins/attacks/constraineddeleg.md'
+      - 'Coercion & relay':
+          - 'coercer': './plugins/attacks/coercer.md'
+          - 'ntlmreflection': './plugins/attacks/ntlmreflection.md'
+      - 'SMB host secrets':
+          - 'smbregdump': './plugins/attacks/smbregdump.md'
+          - 'smbregdump2': './plugins/attacks/smbregdump2.md'
+          - 'dpapi': './plugins/attacks/dpapi.md'
+      - 'Edge cases':
+          - 'snmpbrute': './plugins/attacks/snmpbrute.md'
+          - 'ipmihash': './plugins/attacks/ipmihash.md'
 
-      - 'timeroast': './plugins/attacks/timeroast.md'
-  
+
   - 'Automations':
-      - 'autopwn': './plugins/automations/autopwn.md'
+      - 'Autopwn': './plugins/automations/autopwn.md'
+      - 'Flowgraph':
+          - 'Overview':              './plugins/automations/flowgraph/index.md'
+          - 'Core concepts':         './plugins/automations/flowgraph/concepts.md'
+          - 'UI tour':               './plugins/automations/flowgraph/ui-tour.md'
+          - 'Run modes & opsec':     './plugins/automations/flowgraph/run-modes.md'
+          - 'Typing & wiring':       './plugins/automations/flowgraph/typing-and-wiring.md'
+          - 'Composites':            './plugins/automations/flowgraph/composites.md'
+          - 'Script block':          './plugins/automations/flowgraph/script-block.md'
+          - 'CLI reference':         './plugins/automations/flowgraph/cli.md'
+          - 'Reporting & killchain': './plugins/automations/flowgraph/reporting.md'
+          - 'Recipes':
+              - 'Overview':               './plugins/automations/flowgraph/recipes/index.md'
+              - 'Portscan + SMB finger':  './plugins/automations/flowgraph/recipes/portscan-smbfinger.md'
+              - 'Credential spray':       './plugins/automations/flowgraph/recipes/credential-spray.md'
+              - 'DCSync from creds':      './plugins/automations/flowgraph/recipes/dcsync-from-creds.md'
+              - 'Kerberoast and crack':   './plugins/automations/flowgraph/recipes/kerberoast-and-crack.md'
+              - 'ADCS ESC1 to NT':        './plugins/automations/flowgraph/recipes/adcs-esc1-to-nt.md'
+              - 'Runloop convergence':    './plugins/automations/flowgraph/recipes/runloop-discover-iterate.md'
+          - 'Block reference':
+              - 'All categories':         './plugins/automations/flowgraph/blocks/index.md'
+              - 'Sources & prompts':      './plugins/automations/flowgraph/blocks/sources.md'
+              - 'Queues & sinks':         './plugins/automations/flowgraph/blocks/queues-sinks.md'
+              - 'CredMux':                './plugins/automations/flowgraph/blocks/credmux.md'
+              - 'Filters & gates':        './plugins/automations/flowgraph/blocks/filters.md'
+              - 'Scanners':               './plugins/automations/flowgraph/blocks/scanners.md'
+              - 'Sessions':               './plugins/automations/flowgraph/blocks/sessions.md'
+              - 'Commands':               './plugins/automations/flowgraph/blocks/commands.md'
+              - 'Attacks':                './plugins/automations/flowgraph/blocks/attacks.md'
+              - 'Enumeration':            './plugins/automations/flowgraph/blocks/enumeration.md'
+              - 'Transforms':             './plugins/automations/flowgraph/blocks/transforms.md'
+              - 'Script':                 './plugins/automations/flowgraph/blocks/script.md'
+              - 'Composite & boundaries': './plugins/automations/flowgraph/blocks/composite.md'
 
   - 'Misc':
     - 'Security considerations': 'security.md'
