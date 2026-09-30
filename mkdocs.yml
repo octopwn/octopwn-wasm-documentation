@@ -45,6 +45,8 @@ nav:
     - 'Modes of Operation': 'user-guide/modesofoperation.md'
     - 'Install': 'setup/install.md'
 
+  - 'OctoAgent': 'user-guide/octoagent.md'
+
   - 'Clients': 
       - 'Overview': './plugins/clients/overview.md'
       - 'DNS' : './plugins/clients/dns.md'

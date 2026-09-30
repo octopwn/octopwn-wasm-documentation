@@ -3,6 +3,7 @@
 Here you can find all information about all editions of Octopwn:
 
 * [Getting started with Octopwn](https://docs.octopwn.com/user-guide/gettingstarted.html)
+* [OctoAgent](https://docs.octopwn.com/user-guide/octoagent.html)
 * [How to install Octopwn](https://docs.octopwn.com/setup/install.html)
 * [Overview of clients](https://docs.octopwn.com/plugins/clients/overview)
 * [Overview of scanners](https://docs.octopwn.com/plugins/scanners/index.html)
@@ -24,9 +25,67 @@ OctoPwn ships two plain-text companions of this documentation, following the [ll
 
 Both files are auto-generated from `mkdocs.yml` on every release.
 
-**Current Octopwn version:** v4.0 (2-April 2026)  
+**Current Octopwn version:** v5.0 (30-September 2026)  
 **Current open beta:** none
 
+# Release notes for v5.0  
+**New feature: OctoAgent AI assistant** (Enterprise only)  
+- Fully on-prem, controlled, customizable, transparent and logged AI assistant that uses Octopwn's manual and automated tools to run full pentests autonomously. See the [OctoAgent](user-guide/octoagent.md) page.  
+- Users can define which tools are allowed, confirmed every time, or denied  
+- System prompts include defined plugin types, usage permissions, and network exclusions  
+- New model catalog, thinking, and policy modules; commands to manage per-session advisor policy and to cancel running advisor sessions  
+- New file-inspection capability for LLM-driven analysis  
+- Watch the [OctoAgent video](https://www.youtube.com/watch?v=f_HqEnIe1zM)  
+  
+**Reporting improvements**  
+- "Download Report" now generates a full LLM pentest report, including an executive summary  
+- All report artifacts are bundled into a single zip  
+- Excel exports now include a grouped-vulnerabilities view, SMB file-statistics, and password-stats reporting paths, along with the existing DOCX and HTML versions  
+  
+**New attacks**  
+- New brute-force attacks: SSHBRUTE, VNCBRUTE, and ADBRUTE  
+- New smbridbrute (SMB RID brute) and nopac (noPac / CVE-2021-42278/42287) modules  
+- New SMB posture scanners: smbanon (anonymous access) and smbenc (SMB encryption)  
+- New credential finders for FTP, SCP, NFS, and SMB, with optional LLM secret extraction  
+- Kerberos S4U2Proxy improvements: alternate SPN handling and addticket enhancements for better ticket management  
+- Watch a [Kerberoast attack video](https://www.youtube.com/watch?v=Ddb2T4acLhc)  
+  
+**Scanner & network improvements**  
+- Network interface management added to the scanner: fetch targets, proxies, and interfaces, plus an InterfacePicker in the Discovery and Relay Path windows  
+- Session history now supports aggregate results across all scans — you can select all results from previous scans  
+- Scan result fetching supports ordering and search simultaneously  
+- Nuclei engine overhaul: a full, self-contained Nuclei template engine (DSL, matchers/extractors, protocol handlers, payloads, and template parsing)  
+- AutoScanner: optional include_udp parameter to add UDP trigger ports to Nmap discovery (off by default)  
+- Capabilities export: create_capabilities_table produces a CSV inventory of every module with its tier  
+  
+**New protocol & service coverage**  
+- First-class support for MySQL and PostgreSQL, followed by Redis, Memcached, and MongoDB — each ships client types, authentication/connection parameters (including SSL options), and dedicated scanner result fields  
+- New Citrix scanners (citrix, citrixica) with a fingerprint database for version/service detection  
+- New VMware scanning and vulnerability engine (vmwarevuln)  
+  
+**Automation editor improvements** (Enterprise only)  
+- Default templates enhanced, including a clearer "NTLM Relay SMB PoC" template  
+- Watch the [automation editor video](https://www.youtube.com/watch?v=SUp-YJ9sUSw)  
+  
+**Plugin system overhaul**  
+- Replaced the legacy plugin system with a new OctoPwnAutomation base and a dynamic plugin manager supporting load/unload/status at runtime  
+- Descriptor-driven auto-registration, so plugins can register without a traditional register hook  
+- New plugin SDK with type stubs, a code-intel helper, a loader, and runnable example plugins (attack/client/scanner/server/util templates plus automation examples)  
+- Dev-plugin loading now reports detailed success/failure feedback  
+  
+**Other notable changes**  
+- BloodHound terminology and commands replaced with a unified Domain Graph integration: connect/disconnect to a Domain Graph server, load graph data from files, and one-shot domaincollect collection  
+- New LDAP/LDAPS domains can trigger automatic domain-data collection  
+- New credential import dialogs for Impacket secretsdump and Mimikatz dcsync output  
+- Credential verification functionality added  
+- More consistent design and improvements in window handling  
+  
+**Bugfixes:**  
+- Guarded the xterm WebGL addon teardown crash on terminal dispose  
+- Auth-type handling fixed in the create-client dialog and comms manager  
+- Autoscan console rendering bug fixed  
+- Start-gate hint now shows the actual missing field; restricted-tools panel hidden  
+  
 # Release notes for v4.0  
 **Major UI overhaul**  
 - New login flow, all windows are improved, many usability improvements  

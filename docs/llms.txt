@@ -10,6 +10,10 @@
 - [Modes of Operation](https://docs.octopwn.com/user-guide/modesofoperation.html): No network connections will be made to other hosts. Nothing extra to configure.
 - [Install](https://docs.octopwn.com/setup/install.html): Octopwn is a versatile suite of tools with multiple startup options.
 
+## OctoAgent
+
+- [OctoAgent](https://docs.octopwn.com/user-guide/octoagent.html): OctoPwn's AI Assistant is a multi-agent AI solution that runs entirely within your web browser. It helps streamline penetration testing engagements while giving you access to the capabilities of the OctoPwn framework.
+
 ## Clients
 
 - [Overview](https://docs.octopwn.com/plugins/clients/overview.html): At its heart, the Clients section serves as the command center for communication with different protocols. These clients are not standalone tools but rather modular components that work together seamlessly to execute complex tasks during a…
